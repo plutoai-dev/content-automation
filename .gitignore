@@ -1,0 +1,25 @@
+.env
+__pycache__/
+*.pyc
+
+# Confidential
+service_account.json
+
+# Dependencies
+node_modules/
+bin/
+
+# Dashboard Build
+.next/
+out/
+build/
+
+# Temporary Execution Files
+temp_*
+Final_*
+debug_output.txt
+*.mp4
+*.mp3
+*.png
+*.ass
+*.srt
