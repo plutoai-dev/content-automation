@@ -39,11 +39,12 @@ export async function GET() {
             }),
             sheets.spreadsheets.values.get({
                 spreadsheetId,
-                range: "'Backend Monitoring'!A1",
-            }).catch(() => ({ data: { values: [['Idle']] } })) // Fallback if sheet doesn't exist yet
+                range: "'Backend Monitoring'!A:B",
+            }).catch(() => ({ data: { values: [['Idle', 'System ready']] } })) // Fallback if sheet doesn't exist yet
         ]);
 
         const engineStatus = statusResponse.data.values?.[0]?.[0] || 'Idle';
+        const statusMessage = statusResponse.data.values?.[0]?.[1] || 'System ready';
 
         const rows = response.data.values;
         if (!rows || rows.length <= 1) {
@@ -61,6 +62,19 @@ export async function GET() {
             header.forEach((key, i) => {
                 obj[key.toLowerCase()] = row[i];
             });
+
+            // Parse content strategy from column G
+            if (obj['content strategy']) {
+                const strategyText = obj['content strategy'];
+                const titleMatch = strategyText.match(/TITLE:\s*(.*?)(?=\n\n|$)/);
+                const captionMatch = strategyText.match(/CAPTION:\s*(.*?)(?=\n\n|$)/);
+                const hashtagsMatch = strategyText.match(/HASHTAGS:\s*(.*?)(?=\n\n|$)/);
+
+                obj.title = titleMatch ? titleMatch[1].trim() : 'No Title';
+                obj.caption = captionMatch ? captionMatch[1].trim() : 'No Caption';
+                obj.hashtags = hashtagsMatch ? hashtagsMatch[1].trim() : '#content';
+            }
+
             return obj;
         });
 
@@ -92,7 +106,8 @@ export async function GET() {
             activity: dataRows.slice(0, 10), // Last 10
             platformDistribution,
             spreadsheetId,
-            engineStatus
+            engineStatus,
+            statusMessage
         });
 
     } catch (error: any) {

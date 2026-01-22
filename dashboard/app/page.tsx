@@ -126,14 +126,13 @@ export default function Dashboard() {
                         animate={{ x: 0, opacity: 1 }}
                         className="flex flex-col items-end gap-3"
                     >
-                        <div className="glass-card px-6 py-3 rounded-2xl border-violet-500/20 bg-violet-500/5 flex items-center gap-4">
-                            <div className="flex flex-col">
+                        <div className="glass-card px-6 py-4 rounded-2xl border-violet-500/20 bg-violet-500/5 flex items-center gap-4 min-w-[280px]">
+                            <div className="flex flex-col flex-1">
                                 <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">Engine Status</span>
-                                <span className="text-sm font-bold text-white max-w-[200px] truncate">{data?.engineStatus || 'Idle'}</span>
+                                <span className="text-sm font-bold text-white">{data?.engineStatus || 'Idle'}</span>
+                                <span className="text-xs text-white/60 mt-1">{data?.statusMessage || 'System ready'}</span>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
-                                <Activity className="w-4 h-4 text-violet-400 animate-pulse" />
-                            </div>
+                            <div className={`w-3 h-3 rounded-full ${data?.engineStatus === 'Processing' ? 'bg-green-500 animate-pulse' : 'bg-violet-500/60'}`} />
                         </div>
                         <button
                             onClick={fetchData}
@@ -141,20 +140,20 @@ export default function Dashboard() {
                             disabled={loading}
                         >
                             <RefreshCw className={`w-4 h-4 text-violet-400 group-hover:rotate-180 transition-transform duration-700 ${loading ? 'animate-spin' : ''}`} />
-                            <span>SYNC DATA</span>
+                            <span>REFRESH</span>
                         </button>
                     </motion.div>
                 </header>
 
                 {/* Stats Grid */}
                 <motion.div
-                    variants={container}
-                    initial="hidden"
-                    animate="show"
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
                 >
                     <StatCard
-                        title="Total Produced"
+                        title="Videos Processed"
                         value={stats.total}
                         icon={<Video />}
                         color="violet"
@@ -166,14 +165,8 @@ export default function Dashboard() {
                         color="emerald"
                     />
                     <StatCard
-                        title="Processing"
-                        value={stats.processing}
-                        icon={<Zap />}
-                        color="amber"
-                    />
-                    <StatCard
                         title="Last Activity"
-                        value={stats.lastActivity}
+                        value={stats.lastActivity === 'N/A' ? 'Never' : new Date(stats.lastActivity).toLocaleDateString()}
                         icon={<Activity />}
                         color="cyan"
                     />
@@ -357,26 +350,46 @@ export default function Dashboard() {
                             </div>
 
                             <div className="space-y-6">
-                                <div>
-                                    <h4 className="font-bold text-white/90 mb-2">Title</h4>
-                                    <p className="text-white/70">{selectedVideo.title || 'N/A'}</p>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-violet-400">
+                                        <FileText className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Title</span>
+                                    </div>
+                                    <p className="text-white font-medium leading-relaxed">{selectedVideo.title || 'No title available'}</p>
                                 </div>
 
-                                <div>
-                                    <h4 className="font-bold text-white/90 mb-2">Caption</h4>
-                                    <p className="text-white/70">{selectedVideo.caption || 'N/A'}</p>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-fuchsia-400">
+                                        <Send className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Caption</span>
+                                    </div>
+                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                        <p className="text-white/80 leading-relaxed">{selectedVideo.caption || 'No caption available'}</p>
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <h4 className="font-bold text-white/90 mb-2">Hashtags</h4>
-                                    <p className="text-white/70 font-mono text-sm">{selectedVideo.hashtags || 'N/A'}</p>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-amber-400">
+                                        <Hash className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Hashtags</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(selectedVideo.hashtags || '#content').split(' ').map((tag: string, i: number) => (
+                                            <span key={i} className="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm font-medium">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <h4 className="font-bold text-white/90 mb-2">Platforms</h4>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-emerald-400">
+                                        <TrendingUp className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Platforms</span>
+                                    </div>
                                     <div className="flex flex-wrap gap-2">
                                         {(selectedVideo.platform || '').split(',').map((p: string, i: number) => (
-                                            <span key={i} className="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm font-medium">
+                                            <span key={i} className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm font-medium">
                                                 {p.trim()}
                                             </span>
                                         ))}
