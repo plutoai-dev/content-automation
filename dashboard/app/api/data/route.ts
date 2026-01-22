@@ -66,13 +66,34 @@ export async function GET() {
             // Parse content strategy from column G
             if (obj['content strategy']) {
                 const strategyText = obj['content strategy'];
-                const titleMatch = strategyText.match(/TITLE:\s*(.*?)(?=\n\n|$)/);
-                const captionMatch = strategyText.match(/CAPTION:\s*(.*?)(?=\n\n|$)/);
-                const hashtagsMatch = strategyText.match(/HASHTAGS:\s*(.*?)(?=\n\n|$)/);
 
-                obj.title = titleMatch ? titleMatch[1].trim() : 'No Title';
-                obj.caption = captionMatch ? captionMatch[1].trim() : 'No Caption';
-                obj.hashtags = hashtagsMatch ? hashtagsMatch[1].trim() : '#content';
+                // Split by sections
+                const sections = strategyText.split('\n\n');
+
+                sections.forEach(section => {
+                    if (section.startsWith('TITLE:')) {
+                        obj.title = section.replace('TITLE:', '').trim();
+                    } else if (section.startsWith('CAPTION:')) {
+                        obj.caption = section.replace('CAPTION:', '').trim();
+                    } else if (section.startsWith('HASHTAGS:')) {
+                        const hashtagsStr = section.replace('HASHTAGS:', '').trim();
+                        // Handle both array format ['#tag1', '#tag2'] and string format #tag1 #tag2
+                        if (hashtagsStr.startsWith('[') && hashtagsStr.endsWith(']')) {
+                            try {
+                                obj.hashtags = JSON.parse(hashtagsStr).join(' ');
+                            } catch {
+                                obj.hashtags = hashtagsStr;
+                            }
+                        } else {
+                            obj.hashtags = hashtagsStr;
+                        }
+                    }
+                });
+
+                // Set defaults if not found
+                obj.title = obj.title || 'No Title';
+                obj.caption = obj.caption || 'No Caption';
+                obj.hashtags = obj.hashtags || '#content';
             }
 
             return obj;

@@ -203,7 +203,7 @@ export default function Dashboard() {
                                                         <Video className="w-6 h-6" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-sm font-black tracking-tight text-white/80 group-hover:text-white transition-colors">Video #{stats.total - i}</h3>
+                                                        <h3 className="text-sm font-black tracking-tight text-white/80 group-hover:text-white transition-colors">{row.title || `Video ${stats.total - i}`}</h3>
                                                         <p className="text-white/40 text-xs mt-1">{row.timestamp}</p>
                                                         <div className="flex items-center gap-2 mt-2">
                                                             <a href={row['original video link']} target="_blank" rel="noopener" className="text-[10px] font-bold text-white/30 hover:text-violet-400 flex items-center gap-1 transition-colors">
