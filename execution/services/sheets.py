@@ -8,8 +8,17 @@ class SheetsService:
         self.creds = None
         SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
         
+        # Try loading from ENV variable first (Content)
+        json_creds = os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON')
         creds_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', 'service_account.json')
-        if os.path.exists(creds_path):
+        
+        if json_creds:
+            import json
+            info = json.loads(json_creds)
+            self.creds = service_account.Credentials.from_service_account_info(
+                info, scopes=SCOPES)
+            self.service = build('sheets', 'v4', credentials=self.creds)
+        elif os.path.exists(creds_path):
             self.creds = service_account.Credentials.from_service_account_file(
                 creds_path, scopes=SCOPES)
             self.service = build('sheets', 'v4', credentials=self.creds)
