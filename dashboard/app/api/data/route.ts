@@ -74,6 +74,7 @@ export async function GET() {
             stats: { total, success, processing, lastActivity },
             activity: dataRows.slice(0, 10), // Last 10
             platformDistribution,
+            spreadsheetId,
         });
 
     } catch (error: any) {

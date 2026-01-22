@@ -283,7 +283,7 @@ export default function Dashboard() {
                                 <h3 className="text-2xl font-black mb-3 tracking-tight">Full Visibility</h3>
                                 <p className="text-white/60 text-sm font-medium mb-8 leading-relaxed italic">Access granular execution logs and transcription metadata in the cloud.</p>
                                 <a
-                                    href="https://docs.google.com/spreadsheets/d/1JTJzRwHIFe25MFFmOxofVNbymWUEr9M7VCM3F1zWlfA"
+                                    href={data?.spreadsheetId ? `https://docs.google.com/spreadsheets/d/${data.spreadsheetId}` : "https://docs.google.com/spreadsheets/d/1JTJzRwHIFe25MFFmOxofVNbymWUEr9M7VCM3F1zWlfA"}
                                     target="_blank"
                                     rel="noopener"
                                     className="flex items-center justify-center gap-3 w-full py-4 bg-white text-indigo-700 rounded-2xl font-black shadow-xl hover:scale-[1.03] transition-all"
