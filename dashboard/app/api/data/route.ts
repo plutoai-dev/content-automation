@@ -63,38 +63,20 @@ export async function GET() {
                 obj[key.toLowerCase()] = row[i];
             });
 
-            // Parse content strategy from column G
+            // Extract title from content strategy (column G)
             if (obj['content strategy']) {
                 const strategyText = obj['content strategy'];
-
-                // Split by sections
-                const sections = strategyText.split('\n\n');
-
-                sections.forEach(section => {
-                    if (section.startsWith('TITLE:')) {
-                        obj.title = section.replace('TITLE:', '').trim();
-                    } else if (section.startsWith('CAPTION:')) {
-                        obj.caption = section.replace('CAPTION:', '').trim();
-                    } else if (section.startsWith('HASHTAGS:')) {
-                        const hashtagsStr = section.replace('HASHTAGS:', '').trim();
-                        // Handle both array format ['#tag1', '#tag2'] and string format #tag1 #tag2
-                        if (hashtagsStr.startsWith('[') && hashtagsStr.endsWith(']')) {
-                            try {
-                                obj.hashtags = JSON.parse(hashtagsStr).join(' ');
-                            } catch {
-                                obj.hashtags = hashtagsStr;
-                            }
-                        } else {
-                            obj.hashtags = hashtagsStr;
-                        }
-                    }
-                });
-
-                // Set defaults if not found
-                obj.title = obj.title || 'No Title';
-                obj.caption = obj.caption || 'No Caption';
-                obj.hashtags = obj.hashtags || '#content';
+                const titleMatch = strategyText.match(/TITLE:\s*(.*?)(?=\n\n|$)/);
+                obj.title = titleMatch ? titleMatch[1].trim() : `Video ${dataRows.length}`;
+            } else {
+                obj.title = `Video ${dataRows.length}`;
             }
+
+            // Map columns directly for links
+            // Column B (index 1): original video link
+            // Column C (index 2): final video link
+            obj.originalLink = row[1] || '';
+            obj.finalLink = row[2] || '';
 
             return obj;
         });

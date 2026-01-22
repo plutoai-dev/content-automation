@@ -2,17 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-    Activity, CheckCircle, Clock, Video, ExternalLink,
-    RefreshCw, TrendingUp, ChevronRight, Layout, Zap, Eye,
-    FileText, Hash, Send, X
+    Activity, CheckCircle, Video, ExternalLink,
+    RefreshCw, TrendingUp, Eye, FileText, ChevronRight, X
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function Dashboard() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedVideo, setSelectedVideo] = useState<any>(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -203,10 +201,10 @@ export default function Dashboard() {
                                                         <Video className="w-6 h-6" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-sm font-black tracking-tight text-white/80 group-hover:text-white transition-colors">{row.title || `Video ${stats.total - i}`}</h3>
+                                                        <h3 className="text-sm font-black tracking-tight text-white/80 group-hover:text-white transition-colors">{row.title}</h3>
                                                         <p className="text-white/40 text-xs mt-1">{row.timestamp}</p>
                                                         <div className="flex items-center gap-2 mt-2">
-                                                            <a href={row['original video link']} target="_blank" rel="noopener" className="text-[10px] font-bold text-white/30 hover:text-violet-400 flex items-center gap-1 transition-colors">
+                                                            <a href={row.originalLink} target="_blank" rel="noopener" className="text-[10px] font-bold text-white/30 hover:text-violet-400 flex items-center gap-1 transition-colors">
                                                                 SOURCE FILE <ExternalLink className="w-2 h-2" />
                                                             </a>
                                                         </div>
@@ -233,15 +231,8 @@ export default function Dashboard() {
                                                 </div>
                                                 <div className="px-8 py-6">
                                                     <div className="flex items-center justify-end gap-3">
-                                                        <button
-                                                            onClick={() => setSelectedVideo(row)}
-                                                            className="p-2.5 rounded-xl bg-white/5 text-white/40 hover:bg-white/10 hover:text-white transition-all group/btn"
-                                                            title="View Strategy"
-                                                        >
-                                                            <Layout className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                                                        </button>
                                                         <a
-                                                            href={row['final video link']}
+                                                            href={row.finalLink}
                                                             target="_blank"
                                                             rel="noopener"
                                                             className="button-primary px-4 py-2 text-xs flex items-center gap-2"
@@ -322,84 +313,6 @@ export default function Dashboard() {
                 </div>
             </div >
 
-            {/* Modal */}
-            <AnimatePresence>
-                {selectedVideo && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                        onClick={() => setSelectedVideo(null)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="glass-card p-8 rounded-3xl border-white/20 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-2xl font-black tracking-tight">Content Strategy</h3>
-                                <button
-                                    onClick={() => setSelectedVideo(null)}
-                                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-violet-400">
-                                        <FileText className="w-4 h-4" />
-                                        <span className="text-xs font-black uppercase tracking-widest">Title</span>
-                                    </div>
-                                    <p className="text-white font-medium leading-relaxed">{selectedVideo.title || 'No title available'}</p>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-fuchsia-400">
-                                        <Send className="w-4 h-4" />
-                                        <span className="text-xs font-black uppercase tracking-widest">Caption</span>
-                                    </div>
-                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                                        <p className="text-white/80 leading-relaxed">{selectedVideo.caption || 'No caption available'}</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-amber-400">
-                                        <Hash className="w-4 h-4" />
-                                        <span className="text-xs font-black uppercase tracking-widest">Hashtags</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {(selectedVideo.hashtags || '#content').split(' ').map((tag: string, i: number) => (
-                                            <span key={i} className="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm font-medium">
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-emerald-400">
-                                        <TrendingUp className="w-4 h-4" />
-                                        <span className="text-xs font-black uppercase tracking-widest">Platforms</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {(selectedVideo.platform || '').split(',').map((p: string, i: number) => (
-                                            <span key={i} className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm font-medium">
-                                                {p.trim()}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 }
