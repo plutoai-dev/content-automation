@@ -24,3 +24,4 @@ debug_output.txt
 *.ass
 *.srt
 .vercel
+.env*.local
