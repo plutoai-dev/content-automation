@@ -51,7 +51,7 @@ export default function Dashboard() {
         show: { y: 0, opacity: 1 }
     };
 
-    if (loading && !data) {
+    if (loading && !data && !error) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#0a0f1e]">
                 <motion.div
@@ -61,6 +61,34 @@ export default function Dashboard() {
                 >
                     <RefreshCw className="w-12 h-12 text-violet-500 animate-spin" />
                     <p className="text-white/60 font-bold tracking-[0.2em] text-sm uppercase">Initializing Engine...</p>
+                </motion.div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#0a0f1e]">
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="flex flex-col items-center gap-6 text-center"
+                >
+                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                        <X className="w-8 h-8 text-red-500" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-white mb-2">Connection Error</h2>
+                        <p className="text-white/60 text-sm mb-4">Failed to load dashboard data</p>
+                        <p className="text-red-400 text-xs font-mono bg-red-500/10 p-3 rounded max-w-md">{error}</p>
+                    </div>
+                    <button
+                        onClick={fetchData}
+                        className="button-primary"
+                    >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry
+                    </button>
                 </motion.div>
             </div>
         );

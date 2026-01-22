@@ -6,15 +6,21 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
+        console.log('API called - checking env vars');
+        console.log('GOOGLE_SERVICE_ACCOUNT_JSON present:', !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+        console.log('GOOGLE_SHEET_ID:', process.env.GOOGLE_SHEET_ID);
+
         let authOptions: any = {
             scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
         };
 
         if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+            console.log('Using env var for credentials');
             // Vercel / Production: Use environment variable
             const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
             authOptions.credentials = credentials;
         } else {
+            console.log('Using local service_account.json file');
             // Local Development: Use file
             authOptions.keyFile = path.join(process.cwd(), '..', 'service_account.json');
         }
@@ -90,6 +96,8 @@ export async function GET() {
 
     } catch (error: any) {
         console.error('Sheet fetch error:', error);
+        console.error('Error stack:', error.stack);
+        console.error('Error message:', error.message);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
