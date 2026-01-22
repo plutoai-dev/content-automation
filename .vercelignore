@@ -1,0 +1,19 @@
+# Exclude everything except dashboard
+*
+
+# Include dashboard directory
+!dashboard/
+
+# Exclude backend files that shouldn't be in Vercel
+execution/
+requirements.txt
+service_account.json
+.env
+processed_videos.json
+bin/
+setup_ffmpeg.ps1
+test_drive.py
+diag_folders.py
+Gemini.md
+directives/
+.github/

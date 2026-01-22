@@ -1,27 +1,78 @@
+# Environment and Credentials (NEVER commit these!)
 .env
+.env*.local
+service_account.json
+*.key
+*.pem
+
+# Python
 __pycache__/
 *.pyc
-
-# Confidential
-service_account.json
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # Dependencies
 node_modules/
 bin/
+venv/
+env/
+ENV/
 
 # Dashboard Build
 .next/
 out/
 build/
+.vercel
 
-# Temporary Execution Files
+# Temporary Execution Files (created during video processing)
 temp_*
 Final_*
+Subtitled_*
 debug_output.txt
 *.mp4
 *.mp3
 *.png
+*.jpg
+*.jpeg
 *.ass
 *.srt
-.vercel
-.env*.local
+*.wav
+*.flac
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# GitHub Actions
+.github/workflows/*.log
