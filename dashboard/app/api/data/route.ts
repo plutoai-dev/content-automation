@@ -10,6 +10,45 @@ export async function GET() {
         console.log('GOOGLE_SERVICE_ACCOUNT_JSON present:', !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
         console.log('GOOGLE_SHEET_ID:', process.env.GOOGLE_SHEET_ID);
 
+        // Check if we should use mock data
+        const useMockData = !process.env.GOOGLE_SERVICE_ACCOUNT_JSON && !process.env.GOOGLE_SHEET_ID;
+
+        if (useMockData) {
+            console.log('Using mock data for testing');
+            return NextResponse.json({
+                stats: { total: 5, success: 100, processing: 0, lastActivity: '2024-01-22' },
+                activity: [
+                    {
+                        timestamp: '2024-01-22T10:30:00Z',
+                        'original video link': 'https://drive.google.com/file/d/mock1',
+                        'final video link': 'https://drive.google.com/file/d/mock1_final',
+                        platform: 'TikTok, Instagram Reels',
+                        title: 'Sample Video 1',
+                        caption: 'This is a sample caption',
+                        hashtags: '#sample #video',
+                        status: 'Completed'
+                    },
+                    {
+                        timestamp: '2024-01-22T09:15:00Z',
+                        'original video link': 'https://drive.google.com/file/d/mock2',
+                        'final video link': 'https://drive.google.com/file/d/mock2_final',
+                        platform: 'YouTube Shorts',
+                        title: 'Sample Video 2',
+                        caption: 'Another sample caption',
+                        hashtags: '#demo #content',
+                        status: 'Completed'
+                    }
+                ],
+                platformDistribution: [
+                    { name: 'TikTok', value: 2 },
+                    { name: 'Instagram Reels', value: 1 },
+                    { name: 'YouTube Shorts', value: 1 }
+                ],
+                spreadsheetId: 'mock-sheet-id',
+                engineStatus: 'Idle'
+            });
+        }
+
         let authOptions: any = {
             scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
         };
