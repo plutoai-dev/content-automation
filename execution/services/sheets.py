@@ -69,3 +69,23 @@ class SheetsService:
         except Exception as e:
             print(f"Error fetching IDs from sheets: {e}")
             return []
+    def update_status(self, sheet_id, status_text):
+        """Overwrite the current status cell in the 'Engine Status' sheet."""
+        if not self.service: return
+        
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        full_status = f"[{timestamp}] {status_text}"
+        
+        range_name = "'Engine Status'!A1"
+        body = {'values': [[full_status]]}
+        
+        try:
+            self.service.spreadsheets().values().update(
+                spreadsheetId=sheet_id,
+                range=range_name,
+                valueInputOption='USER_ENTERED',
+                body=body
+            ).execute()
+        except Exception as e:
+            # If sheet doesn't exist, we might need to handle it, but for now just print
+            print(f"Error updating status: {e}")

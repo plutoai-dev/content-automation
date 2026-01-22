@@ -84,6 +84,7 @@ def main():
                         continue
                     
                     print(f"Processing new file: {file['name']}")
+                    sheets.update_status(sheet_id, f"Downloading: {file['name']}")
                     
                     # 1. Download
                     original_filename = file['name']
@@ -93,6 +94,7 @@ def main():
                     drive.download_file(file['id'], temp_input_path)
                     
                     # 2. Analyze
+                    sheets.update_status(sheet_id, f"Analyzing video: {file['name']}")
                     metadata = video_analyzer.get_metadata(temp_input_path)
                     print(f"Metadata: {metadata}")
                     
@@ -101,6 +103,7 @@ def main():
                         continue
 
                     # 3. Transcribe
+                    sheets.update_status(sheet_id, f"Transcribing (high quality): {file['name']}")
                     print("Transcribing video...")
                     transcript = ai.transcribe_audio(temp_input_path)
                     transcript_text = transcript.text if transcript else ""
@@ -114,11 +117,13 @@ def main():
                     srt_path = f"temp_{base_name}.srt"
                     
                     # 4. Generate Content Strategy
+                    sheets.update_status(sheet_id, "Generating content strategy...")
                     print("Generating content strategy...")
                     strategy = ai.generate_content_strategy(transcript_text, metadata)
                     print(f"Strategy: {strategy}")
                     
                     # 5. Render Pipeline
+                    sheets.update_status(sheet_id, "Rendering subtitles...")
                     subtitled_video_path = f"temp_subtitled_{base_name}.mp4"
                     
                     # Use modern ASS subtitles (yellow highlights, bold styling)
@@ -139,6 +144,7 @@ def main():
                     
                     # Step 5b: Handle Portrait Short Intro
                     if metadata['length_category'] == 'short' and metadata['orientation'] == 'portrait':
+                        sheets.update_status(sheet_id, "Generating Short Intro frame & animation...")
                         print("Detected Short Portrait Video - Generating Intro...")
                         
                         # Extract First Frame
@@ -153,6 +159,7 @@ def main():
                         renderer.create_intro_video(frame_path, title_text, intro_video_path)
                         
                         # Merge Intro + Subtitled Video
+                        sheets.update_status(sheet_id, "Finalizing merge...")
                         final_video_path = f"Final_{base_name}.mp4"
                         print(f"Merging intro and body to {final_video_path}...")
                         renderer.merge_videos(intro_video_path, subtitled_video_path, final_video_path)
@@ -165,12 +172,13 @@ def main():
                     
                     # 6. Upload Final
                     if final_video_path and os.path.exists(final_video_path):
+                        sheets.update_status(sheet_id, "Uploading finished product...")
                         print(f"Uploading final video: {final_video_path}")
                         upload_result = drive.upload_file(final_video_path, final_folder_id)
                         
                         # 7. Log to Sheets
                         if upload_result:
-                            print("Logging result to Google Sheets...")
+                            sheets.update_status(sheet_id, "Syncing metadata to logs...")
                             platforms_list = ["TikTok", "Instagram Reels", "YouTube Shorts"] if metadata['orientation'] == 'portrait' else ["YouTube Long-form", "LinkedIn"]
                             
                             strategy_text = f"TITLE: {strategy.get('title', 'N/A')}\n\nCAPTION: {strategy.get('caption', 'N/A')}\n\nHASHTAGS: {strategy.get('hashtags', 'N/A')}"

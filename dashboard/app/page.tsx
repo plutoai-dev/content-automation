@@ -96,8 +96,17 @@ export default function Dashboard() {
                     <motion.div
                         initial={{ x: 20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
-                        className="flex items-center gap-4"
+                        className="flex flex-col items-end gap-3"
                     >
+                        <div className="glass-card px-6 py-3 rounded-2xl border-violet-500/20 bg-violet-500/5 flex items-center gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">Engine Status</span>
+                                <span className="text-sm font-bold text-white max-w-[200px] truncate">{data?.engineStatus || 'Idle'}</span>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
+                                <Activity className="w-4 h-4 text-violet-400 animate-pulse" />
+                            </div>
+                        </div>
                         <button
                             onClick={fetchData}
                             className="button-outline group flex items-center gap-2"

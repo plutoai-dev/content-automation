@@ -21,12 +21,20 @@ export async function GET() {
 
         const sheets = google.sheets({ version: 'v4', auth });
         const spreadsheetId = process.env.GOOGLE_SHEET_ID || '1JTJzRwHIFe25MFFmOxofVNbymWUEr9M7VCM3F1zWlfA';
-        const range = "'Content Engine'!A:G";
 
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range,
-        });
+        // Fetch Data and Status in parallel
+        const [response, statusResponse] = await Promise.all([
+            sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: "'Content Engine'!A:G",
+            }),
+            sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: "'Engine Status'!A1",
+            }).catch(() => ({ data: { values: [['Ready']] } })) // Fallback if sheet doesn't exist yet
+        ]);
+
+        const engineStatus = statusResponse.data.values?.[0]?.[0] || 'Idle';
 
         const rows = response.data.values;
         if (!rows || rows.length <= 1) {
@@ -75,6 +83,7 @@ export async function GET() {
             activity: dataRows.slice(0, 10), // Last 10
             platformDistribution,
             spreadsheetId,
+            engineStatus
         });
 
     } catch (error: any) {
