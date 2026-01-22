@@ -67,9 +67,13 @@ export async function GET() {
             // Extract title from content strategy (column G)
             if (obj['content strategy']) {
                 const strategyText = obj['content strategy'];
+                console.log('Processing content strategy:', strategyText.substring(0, 100) + '...');
                 const titleMatch = strategyText.match(/TITLE:\s*(.*?)(?=\n\n|$)/);
+                console.log('Title match:', titleMatch);
                 obj.title = titleMatch ? titleMatch[1].trim() : `Video ${rawDataRows.length - index}`;
+                console.log('Final title:', obj.title);
             } else {
+                console.log('No content strategy found for row');
                 obj.title = `Video ${rawDataRows.length - index}`;
             }
 
