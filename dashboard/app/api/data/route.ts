@@ -30,8 +30,8 @@ export async function GET() {
             }),
             sheets.spreadsheets.values.get({
                 spreadsheetId,
-                range: "'Engine Status'!A1",
-            }).catch(() => ({ data: { values: [['Ready']] } })) // Fallback if sheet doesn't exist yet
+                range: "'Backend Monitoring'!A1",
+            }).catch(() => ({ data: { values: [['Idle']] } })) // Fallback if sheet doesn't exist yet
         ]);
 
         const engineStatus = statusResponse.data.values?.[0]?.[0] || 'Idle';

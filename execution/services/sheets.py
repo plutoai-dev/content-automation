@@ -70,13 +70,13 @@ class SheetsService:
             print(f"Error fetching IDs from sheets: {e}")
             return []
     def update_status(self, sheet_id, status_text):
-        """Overwrite the current status cell in the 'Engine Status' sheet."""
+        """Overwrite the current status cell in the 'Backend Monitoring' sheet."""
         if not self.service: return
         
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         full_status = f"[{timestamp}] {status_text}"
         
-        range_name = "'Engine Status'!A1"
+        range_name = "'Backend Monitoring'!A1"
         body = {'values': [[full_status]]}
         
         try:
