@@ -57,7 +57,8 @@ export async function GET() {
 
         // Process rows (skip header)
         const header = rows[0];
-        const dataRows = rows.slice(1).map(row => {
+        const rawDataRows = rows.slice(1);
+        const dataRows = rawDataRows.map((row, index) => {
             const obj: any = {};
             header.forEach((key, i) => {
                 obj[key.toLowerCase()] = row[i];
@@ -67,9 +68,9 @@ export async function GET() {
             if (obj['content strategy']) {
                 const strategyText = obj['content strategy'];
                 const titleMatch = strategyText.match(/TITLE:\s*(.*?)(?=\n\n|$)/);
-                obj.title = titleMatch ? titleMatch[1].trim() : `Video ${dataRows.length}`;
+                obj.title = titleMatch ? titleMatch[1].trim() : `Video ${rawDataRows.length - index}`;
             } else {
-                obj.title = `Video ${dataRows.length}`;
+                obj.title = `Video ${rawDataRows.length - index}`;
             }
 
             // Map columns directly for links
