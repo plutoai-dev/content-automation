@@ -65,10 +65,10 @@ This guide helps you diagnose and fix common issues with the Video Content Autom
 **Symptoms**: Vercel shows 404 error
 
 **Solutions**:
-1. Check Vercel Root Directory is set to `dashboard`
-2. Verify Framework Preset is `Next.js`
-3. Check build succeeded in Vercel logs
-4. Ensure `vercel.json` is correct
+1. **Check Root Directory**: In Vercel dashboard → Project Settings → Set "Root Directory" to `dashboard`
+2. **Framework Preset**: Must be `Next.js`
+3. **Build Success**: Check Vercel deployment logs
+4. **vercel.json**: Should NOT contain `rootDirectory` property (set in dashboard instead)
 
 ### ❌ No Data Loading
 **Symptoms**: Dashboard loads but shows no data

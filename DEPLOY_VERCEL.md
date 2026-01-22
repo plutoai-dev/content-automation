@@ -26,10 +26,10 @@ Vercel should automatically detect these settings, but verify:
 
 ### Build Settings
 - **Framework Preset**: `Next.js`
-- **Root Directory**: `dashboard` (important!)
-- **Build Command**: `npm run build`
+- **Root Directory**: `dashboard` (set this in Vercel dashboard!)
+- **Build Command**: `npm run build` (automatic)
 - **Output Directory**: `.next` (automatic)
-- **Install Command**: `npm install`
+- **Install Command**: `npm install` (automatic)
 
 ### Environment Variables
 Add these in Vercel → Project Settings → Environment Variables:
