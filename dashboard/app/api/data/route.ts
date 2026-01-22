@@ -20,7 +20,7 @@ export async function GET() {
         const auth = new google.auth.GoogleAuth(authOptions);
 
         const sheets = google.sheets({ version: 'v4', auth });
-        const spreadsheetId = '1JTJzRwHIFe25MFFmOxofVNbymWUEr9M7VCM3F1zWlfA';
+        const spreadsheetId = process.env.GOOGLE_SHEET_ID || '1JTJzRwHIFe25MFFmOxofVNbymWUEr9M7VCM3F1zWlfA';
         const range = "'Content Engine'!A:G";
 
         const response = await sheets.spreadsheets.values.get({
