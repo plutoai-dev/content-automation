@@ -80,7 +80,7 @@ Social content automation/
 ├── execution/                 # Python backend
 │   ├── main.py               # Main processing script
 │   └── services/             # Processing modules
-├── frontend/                 # Next.js frontend
+├── dashboard/                # Next.js frontend
 │   └── app/                  # Next.js app router
 ├── .env                      # Local environment variables
 ├── service_account.json      # Google service account
@@ -118,7 +118,7 @@ GOOGLE_SHEET_ID=...
 - [ ] Vercel project connected to GitHub
 - [ ] Environment variables set
 - [ ] Framework set to "Next.js"
-- [ ] Root directory set to "frontend"
+- [ ] Root directory set to "dashboard"
 - [ ] Dashboard loads and shows data
 
 ## 🔍 Troubleshooting
