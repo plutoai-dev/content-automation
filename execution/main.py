@@ -1,6 +1,7 @@
 import time
 import os
 import json
+import logging
 from dotenv import load_dotenv
 from services.drive import DriveService
 from services.video_analysis import VideoAnalyzer
@@ -12,6 +13,17 @@ from services.sheets import SheetsService
 
 # Load Config
 load_dotenv()
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('video_processor.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Add local bin folder to PATH for portable ffmpeg
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
