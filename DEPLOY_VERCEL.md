@@ -25,10 +25,11 @@ This guide walks you through deploying the dashboard frontend to Vercel.
 Vercel should automatically detect these settings, but verify:
 
 ### Build Settings
-Vercel will auto-detect settings from `dashboard/vercel.json`:
-- **Framework**: Next.js (auto-detected)
-- **Build Command**: Automatic
-- **Root Directory**: `dashboard` (configured in vercel.json)
+Configure in Vercel Dashboard → Project Settings:
+- **Framework Preset**: `Next.js`
+- **Root Directory**: `dashboard`
+- **Build Command**: `npm run build` (automatic)
+- **Install Command**: `npm install` (automatic)
 
 ### Environment Variables
 Add these in Vercel → Project Settings → Environment Variables:
