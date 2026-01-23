@@ -25,9 +25,9 @@ This guide walks you through deploying the dashboard frontend to Vercel.
 Vercel should automatically detect these settings, but verify:
 
 ### Build Settings
-Configure in Vercel Dashboard → Project Settings:
-- **Framework Preset**: `Next.js`
-- **Root Directory**: `dashboard`
+Vercel will auto-detect Next.js in the root directory:
+- **Framework Preset**: `Next.js` (auto-detected)
+- **Root Directory**: `/` (root directory)
 - **Build Command**: `npm run build` (automatic)
 - **Install Command**: `npm install` (automatic)
 
