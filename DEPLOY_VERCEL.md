@@ -1,188 +1,151 @@
-# Vercel Dashboard Deployment
+# 🚀 Social Content Automation - Deployment Guide
 
-This guide walks you through deploying the dashboard frontend to Vercel.
+## 📋 Project Overview
 
-## 📋 Prerequisites
+This project consists of two main components:
+- **Frontend Dashboard**: Next.js app deployed on Vercel
+- **Backend Processor**: Python script for video processing (needs cloud deployment)
 
-- GitHub repository connected to Vercel
-- Google service account with Sheets read access
-- Google Sheet ID
+## 🎯 Current Status
 
-## 🚀 Step 1: Connect Repository to Vercel
+### ✅ Frontend (Dashboard)
+- **Status**: Deployed and working on Vercel
+- **URL**: https://content-automation-[hash].vercel.app
+- **Features**:
+  - Real-time monitoring of video processing
+  - Displays processed videos with extracted titles
+  - Shows processing status and statistics
+  - Auto-refreshes every 60 seconds
 
-### Option A: Automatic (Recommended)
-1. Push your code to GitHub
-2. Vercel will detect the deployment automatically if connected
+### 🔄 Backend (Video Processor)
+- **Status**: Working locally, needs cloud deployment
+- **Location**: `execution/main.py`
+- **Features**:
+  - Monitors Google Drive folder for new videos
+  - Processes videos with AI (transcription, subtitles, thumbnails)
+  - Updates Google Sheets with results
+  - Continuous polling every 60 seconds
 
-### Option B: Manual Setup
-1. Go to [vercel.com](https://vercel.com)
-2. Click **"New Project"**
-3. Import your GitHub repository
-4. Vercel will auto-detect Next.js settings
+## 🛠️ Backend Deployment Options
 
-## ⚙️ Step 2: Configure Build Settings
+### Option 1: Railway (Recommended) ⭐
 
-Vercel should automatically detect these settings, but verify:
+**Why Railway?**
+- Python support out of the box
+- Persistent file storage
+- 24/7 uptime
+- Easy GitHub integration
+- Affordable ($5/month)
 
-### Build Settings
-Vercel will auto-detect Next.js in the root directory:
-- **Framework Preset**: `Next.js` (auto-detected)
-- **Root Directory**: `/` (root directory)
-- **Build Command**: `npm run build` (automatic)
-- **Install Command**: `npm install` (automatic)
+**Steps:**
+1. Create account at [Railway.app](https://railway.app)
+2. Connect your GitHub repository
+3. Set environment variables:
+   ```
+   OPENAI_API_KEY=your_key
+   ANTHROPIC_API_KEY=your_key
+   GOOGLE_DRIVE_FOLDER_ID_UPLOAD=your_folder_id
+   GOOGLE_DRIVE_FOLDER_ID_FINAL=your_folder_id
+   GOOGLE_SHEET_ID=your_sheet_id
+   ```
+4. Upload `service_account.json` to Railway
+5. Set start command: `python execution/main.py`
+6. Deploy
 
-### Environment Variables
-Add these in Vercel → Project Settings → Environment Variables:
+### Option 2: Render
 
-| Variable | Value | Environment |
-|----------|-------|-------------|
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | Your service account JSON | Production |
-| `GOOGLE_SHEET_ID` | Your Google Sheet ID | Production |
+**Steps:**
+1. Create account at [Render.com](https://render.com)
+2. Create new Web Service
+3. Connect GitHub repo
+4. Set build command: `pip install -r requirements.txt`
+5. Set start command: `python execution/main.py`
+6. Add environment variables
+7. Upload service account JSON
 
-**Important**: Set environment to "Production" for live deployment.
+### Option 3: DigitalOcean App Platform
 
-## 🔐 Step 3: Google Sheets Access
+**Steps:**
+1. Create account at [DigitalOcean](https://digitalocean.com)
+2. Create new App
+3. Connect GitHub repo
+4. Configure as Python app
+5. Set environment variables
+6. Deploy
 
-### Service Account Setup
-1. **Same service account** as GitHub Actions
-2. **Sheets API access** enabled in Google Cloud
-3. **Read-only access** to your Google Sheet
+## 📁 File Structure
 
-### Share Google Sheet
-1. Open your Google Sheet
-2. Click **Share**
-3. Add the service account email: `your-service-account@your-project.iam.gserviceaccount.com`
-4. Give **"Viewer"** permissions
-
-## 🚀 Step 4: Deploy
-
-### Automatic Deployment
-- Vercel deploys automatically when you push to main branch
-- Check deployment status in Vercel dashboard
-
-### Manual Deployment
-1. Go to Vercel project dashboard
-2. Click **"Deployments"** tab
-3. Click **"Redeploy"** for latest commit
-
-## 📊 Step 5: Verify Deployment
-
-### Check Live Site
-1. Visit your Vercel domain (e.g., `your-project.vercel.app`)
-2. You should see the dashboard loading
-3. Data should appear from your Google Sheet
-
-### Common Issues
-- **404 Error**: Check Root Directory is set to `dashboard`
-- **No Data**: Check environment variables and Sheet permissions
-- **Auth Errors**: Verify service account JSON format
-
-## 🔧 Step 6: Custom Domain (Optional)
-
-### Add Custom Domain
-1. Go to Vercel → Project Settings → Domains
-2. Add your custom domain
-3. Follow DNS configuration instructions
-
-### SSL Certificate
-- Vercel provides automatic SSL certificates
-- HTTPS enabled by default
-
-## 📊 Step 7: Monitor Dashboard
-
-### Vercel Analytics
-- View in Vercel → Project → Analytics
-- Monitor traffic, performance, errors
-
-### Function Logs
-- Go to **Functions** tab in Vercel
-- View API call logs
-- Debug authentication issues
-
-## 🛠️ Step 8: Update Environment Variables
-
-### Change Variables
-1. Go to Vercel → Project Settings → Environment Variables
-2. Update values as needed
-3. **Redeploy** to apply changes
-
-### Test Changes
-1. Use **Preview Deployments** for testing
-2. Create pull requests to test changes safely
-
-## 🚨 Step 9: Troubleshooting
-
-### Dashboard Not Loading
 ```
-Error: 404 NOT_FOUND
+Social content automation/
+├── execution/                 # Python backend
+│   ├── main.py               # Main processing script
+│   └── services/             # Processing modules
+├── dashboard/                # Next.js frontend
+│   └── app/                  # Next.js app router
+├── .env                      # Local environment variables
+├── service_account.json      # Google service account
+└── requirements.txt          # Python dependencies
 ```
-- Check Root Directory setting
-- Verify Next.js build succeeded
-- Check Vercel function logs
 
-### No Data Appearing
+## 🔐 Environment Variables
+
+### Backend (.env)
+```env
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=...
+GOOGLE_DRIVE_FOLDER_ID_UPLOAD=...
+GOOGLE_DRIVE_FOLDER_ID_FINAL=...
+GOOGLE_SHEET_ID=...
+POLL_INTERVAL_SECONDS=60
 ```
-Console: Failed to fetch data
+
+### Frontend (Vercel)
+```env
+GOOGLE_SERVICE_ACCOUNT_JSON={...}
+GOOGLE_SHEET_ID=...
 ```
-- Check environment variables
-- Verify service account permissions
-- Check Google Sheet ID
 
-### Authentication Errors
-```
-Error: Requested entity was not found
-```
-- Verify service account JSON format
-- Check Google Sheet sharing permissions
-- Confirm Sheet ID is correct
+## 🚀 Deployment Checklist
 
-### Build Failures
-- Check Vercel build logs
-- Verify Node.js version compatibility
-- Check for missing dependencies
+### Backend Deployment
+- [ ] Choose cloud platform (Railway recommended)
+- [ ] Set all environment variables
+- [ ] Upload service_account.json
+- [ ] Test video processing
+- [ ] Verify Google Sheets updates
 
-## 📈 Step 10: Performance Optimization
+### Frontend Deployment
+- [ ] Vercel project connected to GitHub
+- [ ] Environment variables set
+- [ ] Framework set to "Next.js"
+- [ ] Root directory set to "dashboard"
+- [ ] Dashboard loads and shows data
 
-### Vercel Features
-- **Edge Functions**: Automatic for better performance
-- **Image Optimization**: Built-in Next.js feature
-- **Caching**: Automatic static asset caching
+## 🔍 Troubleshooting
 
-### Monitor Usage
-- **Free Tier**: 100GB bandwidth, 100GB hours
-- **Paid Tier**: Additional resources available
-- Check usage in Vercel → Project → Usage
+### Backend Issues
+- **"API key not found"**: Check .env file
+- **"service_account.json not found"**: Upload to cloud platform
+- **Google API errors**: Check service account permissions
 
-## 🔄 Step 11: Update Deployment
+### Frontend Issues
+- **404 error**: Check Vercel framework settings
+- **No data**: Ensure backend is running and updating sheets
+- **Auth errors**: Check GOOGLE_SERVICE_ACCOUNT_JSON format
 
-### Automatic Updates
-- Vercel redeploys on every push to main branch
-- Preview deployments for pull requests
+## 📊 Monitoring
 
-### Manual Updates
-1. Push code changes to GitHub
-2. Vercel detects changes automatically
-3. Monitor deployment progress
+- **Dashboard**: View processing status in real-time
+- **Google Sheets**: Check "Content Engine" and "Backend Monitoring" tabs
+- **Logs**: Check cloud platform logs for errors
 
-## 📞 Support
+## 💡 Next Steps
 
-### Vercel Support
-- [Vercel Documentation](https://vercel.com/docs)
-- [Next.js Documentation](https://nextjs.org/docs)
+1. Deploy backend to Railway/Render
+2. Test end-to-end video processing
+3. Monitor dashboard for real-time updates
+4. Optimize processing based on usage
 
-### Common Issues
-- Check [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)
-- Review Vercel function logs
-- Verify Google service account setup
+---
 
-## ✅ Success Checklist
-
-- [ ] Repository connected to Vercel
-- [ ] Root Directory set to `dashboard`
-- [ ] Environment variables configured
-- [ ] Google Sheet shared with service account
-- [ ] Deployment successful (green checkmark)
-- [ ] Dashboard loads with data
-- [ ] Custom domain configured (optional)
-- [ ] SSL certificate active
-- [ ] Monitoring and logs working
+**Need help?** Check the Vercel function logs and cloud platform logs for detailed error messages.
