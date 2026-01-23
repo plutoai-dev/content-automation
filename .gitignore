@@ -1,51 +1,27 @@
-.vercel
-.env*.local
+.env
+__pycache__/
+*.pyc
+
+# Confidential
+service_account.json
 
 # Dependencies
 node_modules/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+bin/
 
-# Build outputs
+# Dashboard Build
 .next/
-.next
 out/
 build/
-dist/
 
-# Binaries and executables
-bin/
-*.exe
-*.dll
-*.so
-*.dylib
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Secret files
-service_account.json
+# Temporary Execution Files
+temp_*
+Final_*
 debug_output.txt
-
-# Cache directories
-.cache/
+*.mp4
+*.mp3
+*.png
+*.ass
+*.srt
+.vercel
+.env*.local

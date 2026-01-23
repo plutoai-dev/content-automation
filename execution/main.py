@@ -33,44 +33,36 @@ def save_processed_log(log):
         json.dump(log, f)
 
 def main():
-    print("Starting Video Content Engine (GitHub Actions Edition)...")
-    print(f"Execution started at: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}")
+    print("Starting Video Content Engine (FFmpeg Edition)...")
+    
+    drive = DriveService()
+    video_analyzer = VideoAnalyzer()
+    ai = AIService()
+    renderer = RenderService()
+    sheets = SheetsService()
 
-    try:
-        drive = DriveService()
-        video_analyzer = VideoAnalyzer()
-        ai = AIService()
-        renderer = RenderService()
-        sheets = SheetsService()
-    except Exception as e:
-        print(f"Failed to initialize services: {e}")
-        return 1
-
+    
     sheet_id = os.getenv('GOOGLE_SHEET_ID')
     upload_folder_id = os.getenv('GOOGLE_DRIVE_FOLDER_ID_UPLOAD')
     final_folder_id = os.getenv('GOOGLE_DRIVE_FOLDER_ID_FINAL')
+    
+    # Pre-populate processed IDs from both local log and Google Sheet
+    processed_ids = load_processed_log()
+    if not isinstance(processed_ids, list): processed_ids = []
+    
+    print("Syncing with Google Sheets for already processed videos...")
+    sheet_ids = sheets.get_processed_ids(sheet_id) if sheet_id else []
+    if sheet_ids:
+        processed_ids = list(set(processed_ids + sheet_ids))
+    print(f"Tracking {len(processed_ids)} processed videos.")
 
-    if not all([sheet_id, upload_folder_id, final_folder_id]):
-        print("ERROR: Missing required environment variables")
-        return 1
-
-    # Get processed IDs from Google Sheets only (reliable state management)
-    print("Loading processed video IDs from Google Sheets...")
-    processed_ids = sheets.get_processed_ids(sheet_id) if sheet_id else []
-    if not isinstance(processed_ids, list):
-        processed_ids = []
-    print(f"Tracking {len(processed_ids)} already processed videos.")
-
-    try:
-        print("Scanning for new videos in upload folder...")
-        files = drive.list_files(upload_folder_id)
-        print(f"Found {len(files)} total files in upload folder")
-
-        new_videos_found = 0
-        processed_count = 0
-        failed_count = 0
-
-        for file in files:
+    
+    while True:
+        try:
+            print("Polling for new videos...")
+            files = drive.list_files(upload_folder_id)
+            
+            for file in files:
                 # Initialization for safety
                 temp_input_path = None
                 srt_path = None
@@ -86,14 +78,13 @@ def main():
                     # Skip already processed IDs
                     if file['id'] in processed_ids:
                         continue
-
+                    
                     # Skip videos that are actually final outputs (same folder requirement)
                     if file['name'].startswith("Final_") or file['name'].startswith("Subtitled_"):
                         continue
-
-                    new_videos_found += 1
-                    print(f"[{new_videos_found}] Processing new file: {file['name']}")
-                    sheets.update_status(sheet_id, f"Processing: {file['name']}")
+                    
+                    print(f"Processing new file: {file['name']}")
+                    sheets.update_status(sheet_id, f"Downloading: {file['name']}")
                     
                     # 1. Download
                     original_filename = file['name']
@@ -196,22 +187,20 @@ def main():
 
                             sheets.log_video(sheet_id, file['id'], file.get('webViewLink', 'N/A'), upload_result.get('webViewLink', 'N/A'), platforms_list, strategy_text)
 
-                        print(f"✅ Success! Processed {file['name']}")
+                        print(f"Success! Processed {file['name']}")
                         processed_ids.append(file['id'])
-                        processed_count += 1
+                        save_processed_log(processed_ids)
                     else:
                         print(f"Failed to generate final video for {file['name']}")
 
                 except Exception as e:
-                    print(f"❌ Error processing video {file.get('name', 'unknown')}: {e}")
-                    failed_count += 1
-                    sheets.update_status(sheet_id, f"Failed: {file.get('name', 'unknown')} - {str(e)[:100]}")
-
+                    print(f"Error processing video {file.get('name', 'unknown')}: {e}")
+                
                 finally:
                     # Comprehensive cleanup
                     files_to_clean = [
-                        temp_input_path, srt_path, ass_path,
-                        final_video_path, subtitled_video_path,
+                        temp_input_path, srt_path, ass_path, 
+                        final_video_path, subtitled_video_path, 
                         frame_path, titled_image_path, intro_video_path
                     ]
                     for p in files_to_clean:
@@ -220,38 +209,12 @@ def main():
                                 os.remove(p)
                             except Exception as cleanup_err:
                                 print(f"Cleanup warning: Could not delete {p}: {cleanup_err}")
-
-        # Final summary
-        print(f"\n{'='*50}")
-        print("EXECUTION SUMMARY")
-        print(f"{'='*50}")
-        print(f"Total files scanned: {len(files)}")
-        print(f"New videos found: {new_videos_found}")
-        print(f"Successfully processed: {processed_count}")
-        print(f"Failed to process: {failed_count}")
-        print(f"Execution completed at: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}")
-        print(f"{'='*50}\n")
-
-        # Update final status
-        if processed_count > 0:
-            sheets.update_status(sheet_id, f"Completed: {processed_count} videos processed")
-        elif new_videos_found == 0:
-            sheets.update_status(sheet_id, "No new videos to process")
-        else:
-            sheets.update_status(sheet_id, f"Completed with {failed_count} failures")
-
-        # Return appropriate exit code
-        return 0 if failed_count == 0 else 1
-
-    except Exception as e:
-        print(f"❌ Critical error in main execution: {e}")
-        if sheet_id:
-            try:
-                sheets.update_status(sheet_id, f"Critical error: {str(e)[:100]}")
-            except:
-                pass
-        return 1
+                    
+        except Exception as e:
+            print(f"Error in main loop: {e}")
+            
+        print("Sleeping for 60s...")
+        time.sleep(60)
 
 if __name__ == "__main__":
-    exit_code = main()
-    exit(exit_code)
+    main()
