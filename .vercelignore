@@ -1,0 +1,41 @@
+# Exclude backend files from Vercel deployment
+execution/
+requirements.txt
+setup_ffmpeg.ps1
+test_drive.py
+diag_folders.py
+Gemini.md
+processed_videos.json
+
+# Exclude credential files
+.env
+service_account.json
+
+# Exclude development files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Exclude temporary files
+temp_*
+Final_*
+*.mp4
+*.mp3
+*.png
+*.ass
+*.srt
+debug_output.txt
+
+# Exclude GitHub Actions
+.github/
+
+# Exclude documentation (keep in repo but not deployed)
+DEPLOY_VERCEL.md
+README.md
+SECURITY.md
+SETUP_GITHUB_ACTIONS.md
+TROUBLESHOOTING.md
+
+# Keep only dashboard files for deployment
+!dashboard/
