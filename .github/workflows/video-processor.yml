@@ -41,19 +41,19 @@ jobs:
 
     - name: Create service account credentials
       run: |
-        echo "${{ vars.GOOGLE_SERVICE_ACCOUNT_JSON }}" > service_account.json
+        echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}" > service_account.json
       env:
-        GOOGLE_SERVICE_ACCOUNT_JSON: ${{ vars.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
 
     - name: Run video processing
       run: |
         python execution/main.py
       env:
-        GOOGLE_SHEET_ID: ${{ vars.GOOGLE_SHEET_ID }}
-        GOOGLE_DRIVE_FOLDER_ID_UPLOAD: ${{ vars.GOOGLE_DRIVE_FOLDER_ID_UPLOAD }}
-        GOOGLE_DRIVE_FOLDER_ID_FINAL: ${{ vars.GOOGLE_DRIVE_FOLDER_ID_FINAL }}
-        OPENAI_API_KEY: ${{ vars.OPENAI_API_KEY }}
-        ANTHROPIC_API_KEY: ${{ vars.ANTHROPIC_API_KEY }}
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        GOOGLE_DRIVE_FOLDER_ID_UPLOAD: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID_UPLOAD }}
+        GOOGLE_DRIVE_FOLDER_ID_FINAL: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID_FINAL }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         MAX_VIDEOS_PER_RUN: ${{ env.MAX_VIDEOS_PER_RUN }}
 
     - name: Clean up credentials
