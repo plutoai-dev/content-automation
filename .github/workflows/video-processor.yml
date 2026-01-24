@@ -45,6 +45,17 @@ jobs:
       env:
         GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
 
+    - name: Debug service account JSON
+      run: |
+        echo "First 100 characters:"
+        head -c 100 service_account.json
+        echo -e "\n\nLast 100 characters:"
+        tail -c 100 service_account.json
+        echo -e "\n\nFile size:"
+        wc -c service_account.json
+        echo -e "\n\nJSON validation:"
+        python3 -c "import json; json.load(open('service_account.json')); print('JSON is valid')"
+
     - name: Run video processing
       run: |
         python execution/main.py
