@@ -41,9 +41,21 @@ jobs:
 
     - name: Create service account credentials
       run: |
-        echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}" > service_account.json
-      env:
-        GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        cat > service_account.json << 'EOF'
+        {
+          "type": "service_account",
+          "project_id": "antigravity-project-485112",
+          "private_key_id": "9c58fa0b25c4a4adaaf166ea0cf8c658ccb91a1e",
+          "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCiHf59Gem74dmf\noFtN+kr8nTbIEhruIFq36nWjjhhPizg3EtjmIzcUFoxPaYDmyKFb/zcvCRDQLP3L\nhWleOv3deeKArIwp9YmSyHWhvwYMJW5zXfGhe1BS/oCy8HcrQF/CBiO3AgXA3MU4\ngjzoLkwEpEGyLjSalJzdaaSF28eYC5tjQeOcDYbkcMSmet/tD7v89kJEEXfxnoC7\nDru3K7B5mChvSyGfQLhhPP7hxdU7RRvVb+WXscb9PCibGyQQgVXudsgjMfvR6F6p\nqn7CzoJe890DRoSyK7YPQUFiZgJ/DxtfvsBMpCEFh3h2AguSKCLJlXmV2aF1DVjQ\nUQPbE6ihAgMBAAECggEAPA5Mdl+hHL7f9ahb6pksKkS7RIagf1JxCOzMQ5iiHOWA\nH7bVrvugrcpklA6Ld/MfA4uaD8yV8+iW5Ew56nSEEwXSCMTi77BMFJo6KX8waFN9\nhTNqDd42tWgemStHmjgwwRmxJVyUcQvX68UjdweflaCbzbwcNJ+VNNir4AK4//PF\n2KTIPjjEaqUGJx0QEBbIe/V+/QzpM0P2pnld4z5GCHi7Ye9JU52XKNYXGvKL+C+L\n0geenxG4JMzdHWxNCb+Zr6fBFFLZKnOU8rkmBhg3RUusW1/+sVF5l+Il5nBbf9mN\nW3A6JXYzlk1e+YwfJj2bLYE2LdHsOzi1bdfCvIBg2QKBgQDPT5BZsTQ6EEpXPQXZ\nPMhRBVERb4wToVz3xY/bzl49lgAW/N/fng91MhwExiPRi8gvQ3L4mUaqNIBcbGyh\nfspOgIXUdjjBpr9kq6wXgS1bK+S7FqPNCAqsQLvodUMZ/+vN8kRXz93OD79ovGHc\nUg0s0niNTKDd+q6CzYzNS/GFLwKBgQDIMTDCd7aJ40F56pKUoHlvXf2bbfdP8Iqm\n0QLozXLGA6QswA/S0Exf8e+xRsjkl679TGEB7ZCNxhY6dDfr4yzcCTnOiXs/IcR+\nWAWboOLfkKnYcGVz+dgKG9YJTxegTn7WWTHjJQT9WrQeahvCUlbhhK3/d1eok9Cl\nkD2IRsPbLwKBgBnQvZf9shQ87RT5+1127Tbxo4u5SUc0g+Ay0Nw9UYz3veEe8j3l\nb+VXLRgHGHTCpFYGXy3H4H3XddiMg+aEZGrsJD41zpGG0zSVECQJKP2+dIg7pIAm\nrTWQBhZHa+iz7shBj/MjZmp/mYVQWBtYeF2JhAuMbEfYLJ0LPape959vAoGBALp+\nwNrZZU7tS+kEsssM+DPcjs7GUdfB0Zj4K8qu4lY/vCkIP3V4IT5ch5xRwgLan+VO\nyyxdoQXCXKDV9ealevv9CEI1Z4B3t7Kv04GZDuGQxflhM9IoFa/NIMcJTIxFs/mB\nnGzr5ssTPar71KJhzJhI30OXbS0Zjw0942TZ78l3AoGBAJiKCpmVxF+Po2L/C0ie\nhJBNxtBxOTZiJE4QRycuROni5FCVcZEo32BZsfGnynP09mcGHWGfLxxgtGnkuqTn\ngv8LCnp4nYeMNID27X8AyjQ932R2pwIrRzkg8oggunNscgKMHQ4YJYNuarfS8L/1\nllo5Qwc+dd/NeZnJ65dmc67l\n-----END PRIVATE KEY-----\n",
+          "client_email": "video-content-engine@antigravity-project-485112.iam.gserviceaccount.com",
+          "client_id": "117501076532314707197",
+          "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+          "token_uri": "https://oauth2.googleapis.com/token",
+          "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+          "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/video-content-engine%40antigravity-project-485112.iam.gserviceaccount.com",
+          "universe_domain": "googleapis.com"
+        }
+        EOF
 
     - name: Debug service account JSON
       run: |
