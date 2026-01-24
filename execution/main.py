@@ -258,13 +258,14 @@ def main():
                             print(f"🧹 Cleaned up: {p}")
                         except Exception as cleanup_err:
                             print(f"⚠️  Cleanup warning: Could not delete {p}: {cleanup_err}")
-# Summary
-total_time = time.time() - start_time
-print("\n📊 Processing Summary:")
-print(f"   ✅ Videos processed: {processed_count}")
-print(f"   ❌ Videos failed: {failed_count}")
-print(f"   ⏱️  Total time: {total_time:.1f}s")
-print(f"   🎯 Success rate: {(processed_count / max(1, processed_count + failed_count) * 100):.1f}%")
+
+        # Summary
+        total_time = time.time() - start_time
+        print("\n📊 Processing Summary:")
+        print(f"   ✅ Videos processed: {processed_count}")
+        print(f"   ❌ Videos failed: {failed_count}")
+        print(f"   ⏱️  Total time: {total_time:.1f}s")
+        print(f"   🎯 Success rate: {(processed_count / max(1, processed_count + failed_count) * 100):.1f}%")
 
         # Update final status
         if sheet_id:
