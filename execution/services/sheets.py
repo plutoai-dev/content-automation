@@ -47,15 +47,14 @@ class SheetsService:
         body = {'values': values}
         
         try:
-            # Use INSERT_ROWS to ALWAYS insert a new row, never overwrite
+            # Standard append finds the next empty row at the bottom
             self.service.spreadsheets().values().append(
                 spreadsheetId=sheet_id,
                 range=range_name,
                 valueInputOption='USER_ENTERED',
-                insertDataOption='INSERT_ROWS',  # Force new row insertion
                 body=body
             ).execute()
-            print(f"🔒 Locked video {filename} in Sheet (new row appended)")
+            print(f"🔒 Locked video {filename} in Sheet (appended to bottom)")
         except Exception as e:
             print(f"Error logging start to sheets: {e}")
 
