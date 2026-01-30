@@ -4,6 +4,7 @@ FROM python:3.12-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies (ffmpeg is required for video processing)
 RUN apt-get update && apt-get install -y \
