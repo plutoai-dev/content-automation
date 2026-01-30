@@ -163,7 +163,7 @@ export default function Dashboard() {
                     />
                     <StatCard
                         title="Last Activity"
-                        value={stats.lastActivity === 'N/A' ? 'Never' : new Date(stats.lastActivity).toLocaleDateString()}
+                        value={stats.lastActivity === 'Never' || stats.lastActivity === 'None' ? 'Never' : stats.lastActivity}
                         icon={<Activity />}
                         color="cyan"
                     />

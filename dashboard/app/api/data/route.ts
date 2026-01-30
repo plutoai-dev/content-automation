@@ -36,10 +36,12 @@ export async function GET() {
             sheets.spreadsheets.values.get({
                 spreadsheetId,
                 range: "'Content Engine'!A:H", // Expanded to include Duration
+                valueRenderOption: 'FORMATTED_VALUE',
             }),
             sheets.spreadsheets.values.get({
                 spreadsheetId,
                 range: "'Backend Monitoring'!A:B",
+                valueRenderOption: 'FORMATTED_VALUE',
             }).catch(() => ({ data: { values: [['Idle', 'System ready']] } }))
         ]);
 
