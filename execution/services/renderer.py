@@ -54,8 +54,8 @@ class RenderService:
                     except:
                         font = ImageFont.load_default()
 
-            # Text wrapping for long titles
-            max_width = int(W * 0.85)  # Use 85% of width for better margins
+            # Text wrapping for long titles - use 90% of width for maximum screen usage
+            max_width = int(W * 0.90)  # 5% margin on each side
             
             # Split title into lines if too long
             words = title_text.split()
