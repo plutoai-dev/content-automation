@@ -28,9 +28,23 @@ for SECRET_NAME in "${SECRETS[@]}"; do
     SECRET_ID=$(echo "$SECRET_NAME" | tr '_' '-' | tr '[:upper:]' '[:lower:]')
     
     echo ""
-    echo "👉 Enter value for $SECRET_NAME (input hidden):"
-    read -s SECRET_VALUE
     
+    # Special handling for JSON file
+    if [ "$SECRET_NAME" == "GOOGLE_SERVICE_ACCOUNT_JSON" ]; then
+        if [ -f "service_account.json" ]; then
+            echo "   � Found service_account.json, using it for $SECRET_NAME..."
+            SECRET_VALUE=$(cat service_account.json)
+        else
+            echo "   ⚠️  File 'service_account.json' not found!"
+            echo "      To configure this, upload 'service_account.json' to this folder and re-run."
+            echo "      Skipping $SECRET_NAME for now..."
+            continue
+        fi
+    else
+        echo "�👉 Enter value for $SECRET_NAME (input hidden):"
+        read -s SECRET_VALUE
+    fi
+     
     if [ -z "$SECRET_VALUE" ]; then
         echo "   Skipping $SECRET_NAME (empty)..."
         continue
