@@ -23,7 +23,7 @@ body {
 
 @layer components {
   .glass-card {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-white/[0.03] backdrop-blur-md border border-white/[0.08] shadow-lg;
   }
 
   .glass-hover {
