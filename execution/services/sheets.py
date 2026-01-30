@@ -30,9 +30,9 @@ class SheetsService:
         if not self.service: return
         
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        range_name = "'Content Engine'!A:G"
+        range_name = "'Content Engine'!A:H"
         
-        # Columns: Timestamp, Original Link, Final Link, Platforms, Status, Original ID, Strategy
+        # Columns: Timestamp, Original Link, Final Link, Platforms, Status, Original ID, Strategy, Duration
         values = [[
             timestamp,
             original_link,
@@ -40,19 +40,22 @@ class SheetsService:
             "Processing...",      # Platforms placeholder
             "Processing",         # Status
             original_id,
-            f"Started: {filename}" # Strategy placeholder
+            f"Started: {filename}", # Strategy placeholder
+            ""                    # Duration placeholder
         ]]
         
         body = {'values': values}
         
         try:
+            # Use INSERT_ROWS to ALWAYS insert a new row, never overwrite
             self.service.spreadsheets().values().append(
                 spreadsheetId=sheet_id,
                 range=range_name,
                 valueInputOption='USER_ENTERED',
+                insertDataOption='INSERT_ROWS',  # Force new row insertion
                 body=body
             ).execute()
-            print(f"🔒 Locked video {filename} in Sheet")
+            print(f"🔒 Locked video {filename} in Sheet (new row appended)")
         except Exception as e:
             print(f"Error logging start to sheets: {e}")
 
