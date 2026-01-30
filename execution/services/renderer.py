@@ -34,23 +34,29 @@ class RenderService:
             img = Image.open(image_path)
             draw = ImageDraw.Draw(img)
             
-            # Use Impact font (same as subtitles) but BIGGER for title
+            W, H = img.size
+            
+            # Calculate adaptive font size based on image dimensions
+            # For portrait videos (9:16), use larger font
+            is_portrait = H > W
+            base_font_size = 200 if is_portrait else 160
+            
+            # Use Impact font (same as subtitles) but MUCH BIGGER for title
             try:
                 # Try Impact font - the bold, chunky font used in viral videos
-                font = ImageFont.truetype("impact.ttf", 120)
+                font = ImageFont.truetype("impact.ttf", base_font_size)
             except:
                 try:
                     # Fallback to Arial Bold
-                    font = ImageFont.truetype("arialbd.ttf", 120)
+                    font = ImageFont.truetype("arialbd.ttf", base_font_size)
                 except:
                     try:
-                        font = ImageFont.truetype("arial.ttf", 120)
+                        font = ImageFont.truetype("arial.ttf", base_font_size)
                     except:
                         font = ImageFont.load_default()
 
             # Text wrapping for long titles
-            W, H = img.size
-            max_width = W - 100  # Leave 50px padding on each side
+            max_width = int(W * 0.85)  # Use 85% of width for better margins
             
             # Split title into lines if too long
             words = title_text.split()
@@ -74,25 +80,42 @@ class RenderService:
             if current_line:
                 lines.append(' '.join(current_line))
             
-            # Calculate total text height
-            line_height = 130  # Increased for larger font
+            # Calculate total text height with generous line spacing
+            line_height = int(base_font_size * 1.2)  # 120% of font size for line height
             total_text_height = len(lines) * line_height
             
             # Darken the image with a semi-transparent overlay for better text visibility
             overlay = Image.new('RGBA', img.size, (0, 0, 0, 0))
             overlay_draw = ImageDraw.Draw(overlay)
-            overlay_draw.rectangle([0, 0, W, H], fill=(0, 0, 0, 100))  # 40% dark overlay
-            img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
+            overlay_draw.rectangle([0, 0, W, H], fill=(0, 0, 0, 160))  # Much darker overlay (63% opacity)
+            img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGBA')
             draw = ImageDraw.Draw(img)
             
-            # Draw each line of text centered with keyword highlighting
+            # Calculate starting Y position to center text vertically
             y_offset = (H - total_text_height) / 2
+            
+            # Draw each line of text centered with keyword highlighting
             for line in lines:
                 words = line.split()
                 
                 # Calculate total line width for centering
-                total_line_width = sum([draw.textbbox((0, 0), word, font=font)[2] - draw.textbbox((0, 0), word, font=font)[0] for word in words])
-                total_line_width += (len(words) - 1) * 20  # Add spacing between words
+                word_widths = [draw.textbbox((0, 0), word, font=font)[2] - draw.textbbox((0, 0), word, font=font)[0] for word in words]
+                total_line_width = sum(word_widths) + (len(words) - 1) * 30  # Add spacing between words
+                
+                # Draw background box for this line
+                padding_x = 40
+                padding_y = 20
+                box_x1 = (W - total_line_width) / 2 - padding_x
+                box_y1 = y_offset - padding_y
+                box_x2 = (W + total_line_width) / 2 + padding_x
+                box_y2 = y_offset + line_height - padding_y
+                
+                # Draw rounded rectangle background (semi-transparent black)
+                draw.rounded_rectangle(
+                    [box_x1, box_y1, box_x2, box_y2],
+                    radius=20,
+                    fill=(0, 0, 0, 180)  # 70% opacity black background
+                )
                 
                 # Start position for this line
                 current_x = (W - total_line_width) / 2
@@ -104,27 +127,20 @@ class RenderService:
                         (word.isupper() and len(word) > 1)  # Intentional ALL CAPS emphasis
                     )
                     
-                    # Choose color
-                    text_color = "yellow" if is_important else "white"
+                    # Choose color - clean text without outline
+                    text_color = (255, 255, 0, 255) if is_important else (255, 255, 255, 255)  # Yellow or White (RGBA)
                     
-                    # Draw thick black outline
-                    outline_width = 8
-                    for adj_x in range(-outline_width, outline_width+1):
-                        for adj_y in range(-outline_width, outline_width+1):
-                            if adj_x != 0 or adj_y != 0:
-                                draw.text((current_x+adj_x, y_offset+adj_y), word, font=font, fill="black")
-                    
-                    # Draw colored text on top
+                    # Draw text directly (no outline)
                     draw.text((current_x, y_offset), word, font=font, fill=text_color)
                     
                     # Move to next word position
-                    word_width = draw.textbbox((0, 0), word, font=font)[2] - draw.textbbox((0, 0), word, font=font)[0]
-                    current_x += word_width + 20  # Add spacing
+                    word_width = word_widths[i]
+                    current_x += word_width + 30  # Add spacing
                 
                 y_offset += line_height
             
             titled_image_path = image_path.replace(".png", "_titled.png")
-            img.save(titled_image_path)
+            img.convert('RGB').save(titled_image_path)
 
             # 2. Convert to Video (Loop) + Add Silent Audio
             # Using subprocess for better control over filter_complex
