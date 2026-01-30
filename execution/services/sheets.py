@@ -25,21 +25,22 @@ class SheetsService:
         else:
             self.service = None
 
-    def log_video(self, sheet_id, original_id, original_link, final_link, platforms, strategy_content="N/A"):
-        """Append a new log entry to the Google Sheet."""
+    def log_processing_start(self, sheet_id, original_id, original_link, filename):
+        """Append a new log entry marked as 'Processing' to lock the file."""
         if not self.service: return
         
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        range_name = "'Content Engine'!A:G"  # Extended to column G for Content Strategy
+        range_name = "'Content Engine'!A:G"
         
+        # Columns: Timestamp, Original Link, Final Link, Platforms, Status, Original ID, Strategy
         values = [[
             timestamp,
             original_link,
-            final_link,
-            ", ".join(platforms) if isinstance(platforms, list) else platforms,
-            "Completed",
+            "Processing...",      # Final Link placeholder
+            "Processing...",      # Platforms placeholder
+            "Processing",         # Status
             original_id,
-            strategy_content
+            f"Started: {filename}" # Strategy placeholder
         ]]
         
         body = {'values': values}
@@ -51,8 +52,48 @@ class SheetsService:
                 valueInputOption='USER_ENTERED',
                 body=body
             ).execute()
+            print(f"🔒 Locked video {filename} in Sheet")
         except Exception as e:
-            print(f"Error logging to sheets: {e}")
+            print(f"Error logging start to sheets: {e}")
+
+    def update_log_completion(self, sheet_id, original_id, final_link, platforms, strategy_content, status="Completed", duration=None):
+        """Find the row with original_id and update it with final details."""
+        if not self.service: return
+        
+        # 1. Find the row index
+        ids = self.get_processed_ids(sheet_id)
+        try:
+            # ids list corresponds to rows 2, 3, 4... (0-indexed in list -> 2-indexed in sheet)
+            row_index = ids.index(original_id) + 2 
+        except ValueError:
+            print(f"⚠️ Could not find row for {original_id} to update")
+            return
+
+        # 2. Update the row
+        # Range C:H covers: Final Link(C), Platforms(D), Status(E), ID(F), Strategy(G), Duration(H)
+        range_name = f"'Content Engine'!C{row_index}:H{row_index}"
+        
+        values = [[
+            final_link,
+            ", ".join(platforms) if isinstance(platforms, list) else platforms,
+            status,
+            original_id,
+            strategy_content,
+            str(duration) if duration else ""
+        ]]
+        
+        body = {'values': values}
+        
+        try:
+            self.service.spreadsheets().values().update(
+                spreadsheetId=sheet_id,
+                range=range_name,
+                valueInputOption='USER_ENTERED',
+                body=body
+            ).execute()
+            print(f"✅ Updated Sheet row {row_index} directly w/ status {status}")
+        except Exception as e:
+            print(f"Error updating sheet: {e}")
 
     def get_processed_ids(self, sheet_id):
         """Fetch all original file IDs already processed from the sheet."""
@@ -69,15 +110,15 @@ class SheetsService:
         except Exception as e:
             print(f"Error fetching IDs from sheets: {e}")
             return []
-    def update_status(self, sheet_id, status_text):
-        """Overwrite the current status cell in the 'Backend Monitoring' sheet."""
+    def update_status(self, sheet_id, status_text, state="Processing"):
+        """Overwrite the current status in 'Backend Monitoring' (Col A=State, Col B=Message)."""
         if not self.service: return
         
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-        full_status = f"[{timestamp}] {status_text}"
+        message = f"[{timestamp}] {status_text}"
         
-        range_name = "'Backend Monitoring'!A1"
-        body = {'values': [[full_status]]}
+        range_name = "'Backend Monitoring'!A1:B1"
+        body = {'values': [[state, message]]}
         
         try:
             self.service.spreadsheets().values().update(

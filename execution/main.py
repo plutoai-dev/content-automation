@@ -122,6 +122,9 @@ def main():
                 print(f"🎬 Processing: {file['name']}")
                 sheets.update_status(sheet_id, f"🔄 Processing: {file['name']}")
 
+                # 0. LOCK: Log processing start
+                sheets.log_processing_start(sheet_id, file['id'], file.get('webViewLink', 'N/A'), file['name'])
+
                 # 1. Download
                 original_filename = file['name']
                 base_name, _ = os.path.splitext(original_filename)
@@ -138,6 +141,7 @@ def main():
 
                 if not metadata:
                     print("❌ Could not analyze video, skipping.")
+                    sheets.update_log_completion(sheet_id, file['id'], "N/A", "N/A", "Failed: Metadata Analysis Error", status="Failed")
                     failed_count += 1
                     continue
 
@@ -211,7 +215,7 @@ def main():
                     upload_result = drive.upload_file(final_video_path, final_folder_id)
 
                     if upload_result:
-                        # 8. Log to Sheets
+                        # 8. Log to Sheets (Completion Update)
                         print(f"📊 Logging to Google Sheets...")
                         platforms_list = ["TikTok", "Instagram Reels", "YouTube Shorts"] if metadata.get('orientation') == 'portrait' else ["YouTube Long-form", "LinkedIn"]
 
@@ -221,27 +225,33 @@ def main():
                         if strategy.get('tiktok_caption'):
                             strategy_text += f"\n\nTIKTOK: {strategy['tiktok_caption']}"
 
-                        sheets.log_video(
+                        video_time = time.time() - video_start_time
+                        
+                        sheets.update_log_completion(
                             sheet_id,
                             file['id'],
-                            file.get('webViewLink', 'N/A'),
                             upload_result.get('webViewLink', 'N/A'),
                             platforms_list,
-                            strategy_text
+                            strategy_text,
+                            status="Completed",
+                            duration=f"{video_time:.1f}s"
                         )
 
                         processed_count += 1
-                        video_time = time.time() - video_start_time
                         print(f"✅ Successfully processed {file['name']} in {video_time:.1f}s")
                     else:
                         print(f"❌ Upload failed for {file['name']}")
+                        sheets.update_log_completion(sheet_id, file['id'], "N/A", "N/A", "Failed: Upload Error", status="Failed")
                         failed_count += 1
                 else:
                     print(f"❌ No final video generated for {file['name']}")
+                    sheets.update_log_completion(sheet_id, file['id'], "N/A", "N/A", "Failed: Render Error", status="Failed")
                     failed_count += 1
 
             except Exception as e:
                 print(f"❌ Error processing {file.get('name', 'unknown')}: {e}")
+                if 'file' in locals() and 'id' in file:
+                     sheets.update_log_completion(sheet_id, file['id'], "N/A", "N/A", f"Failed: {str(e)}", status="Failed")
                 failed_count += 1
 
             finally:
@@ -270,7 +280,7 @@ def main():
         # Update final status
         if sheet_id:
             final_status = f"✅ Completed: {processed_count} processed, {failed_count} failed"
-            sheets.update_status(sheet_id, final_status)
+            sheets.update_status(sheet_id, final_status, state="Idle")
 
         return 0 if failed_count == 0 else 1  # Exit code for GitHub Actions
 
@@ -278,6 +288,13 @@ def main():
         print(f"💥 Critical error in main execution: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Try to reset status on crash
+        if 'sheets' in locals() and 'sheet_id' in locals():
+            try:
+                sheets.update_status(sheet_id, f"💥 Crashed: {str(e)}", state="Idle")
+            except:
+                pass
         return 1
 
 if __name__ == "__main__":
