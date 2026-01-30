@@ -2,7 +2,7 @@ def format_ass_timestamp(seconds):
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
     secs = int(seconds % 60)
-    centis = int((seconds - int(seconds)) * 100)
+    centis = int(round((seconds % 1) * 100)) % 100
     return f"{hours}:{minutes:02}:{secs:02}.{centis:02}"
 
 def json_to_ass_modern(whisper_json):
@@ -14,16 +14,18 @@ def json_to_ass_modern(whisper_json):
         print("Debug: json_to_ass_modern received None")
         return ""
     
-    # Safely get segments list
-    segments = []
-    if hasattr(whisper_json, 'segments'):
-        segments = whisper_json.segments or []
-    elif isinstance(whisper_json, dict):
-        segments = whisper_json.get('segments', []) or []
+    def get_val(obj, key):
+        if isinstance(obj, dict): return obj.get(key)
+        return getattr(obj, key, None)
+
+    # Safely get segments and words list
+    segments = get_val(whisper_json, 'segments') or []
+    words_data = get_val(whisper_json, 'words') or []
+
+    print(f"Debug: json_to_ass_modern found {len(segments)} segments and {len(words_data)} words")
     
-    print(f"Debug: json_to_ass_modern found {len(segments)} segments")
-    
-    if not segments:
+    if not segments and not words_data:
+        print("Debug: json_to_ass_modern both segments and words are empty")
         return ""
 
     # ASS Header with modern styling
@@ -44,59 +46,62 @@ def json_to_ass_modern(whisper_json):
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
     ]
 
-    # Prefer word-level timestamps for perfect sync
-    words_data = []
-    if hasattr(whisper_json, 'words') and whisper_json.words:
-        words_data = whisper_json.words
-    elif isinstance(whisper_json, dict) and whisper_json.get('words'):
-        words_data = whisper_json.get('words')
-    
+    header_length = len(ass_content)
+
     if words_data:
-        print(f"Debug: json_to_ass_modern using {len(words_data)} words")
         # Group words into chunks of 3-5 words
         chunk_size = 4
         for i in range(0, len(words_data), chunk_size):
             chunk = words_data[i:i + chunk_size]
+            if not chunk: continue
             
-            # Start time is exactly when the first word of the chunk starts
-            # End time is when the last word of the chunk ends
             try:
-                start_val = chunk[0].get('start') if isinstance(chunk[0], dict) else chunk[0].start
-                end_val = chunk[-1].get('end') if isinstance(chunk[-1], dict) else chunk[-1].end
-                text_list = [w.get('word') if isinstance(w, dict) else w.word for w in chunk]
-            except:
-                continue
+                start_val = get_val(chunk[0], 'start')
+                end_val = get_val(chunk[-1], 'end')
+                text_list = [get_val(w, 'word') for w in chunk]
+                
+                if start_val is None or end_val is None: continue
 
-            start_str = format_ass_timestamp(start_val)
-            end_str = format_ass_timestamp(end_val)
-            
-            line_text = " ".join([word.strip().upper() for word in text_list])
-            ass_content.append(f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{line_text}")
+                start_str = format_ass_timestamp(start_val)
+                end_str = format_ass_timestamp(end_val)
+                
+                line_text = " ".join([word.strip().upper() for word in text_list if word])
+                if line_text:
+                    ass_content.append(f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{line_text}")
+            except Exception as e:
+                print(f"Error grouping words: {e}")
+                continue
     else:
         # Fallback to segment-level if words are missing
-        print("Debug: json_to_ass_modern falling back to segments")
         for segment in segments:
             try:
-                start_val = segment.get('start') if isinstance(segment, dict) else segment.start
-                end_val = segment.get('end') if isinstance(segment, dict) else segment.end
-                text_val = segment.get('text') if isinstance(segment, dict) else segment.text
-            except:
+                start_val = get_val(segment, 'start')
+                end_val = get_val(segment, 'end')
+                text_val = get_val(segment, 'text')
+                
+                if start_val is None or end_val is None or text_val is None: continue
+
+                words = text_val.strip().split()
+                if not words: continue
+                
+                chunk_size = 4
+                for i in range(0, len(words), chunk_size):
+                    chunk_words = words[i:i + chunk_size]
+                    chunk_duration = (end_val - start_val) / max(1, len(words) / chunk_size)
+                    chunk_start = start_val + (i / len(words)) * (end_val - start_val)
+                    chunk_end = min(chunk_start + chunk_duration, end_val)
+                    
+                    start_str = format_ass_timestamp(chunk_start)
+                    end_str = format_ass_timestamp(chunk_end)
+                    
+                    line_text = " ".join([word.upper() for word in chunk_words])
+                    if line_text:
+                        ass_content.append(f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{line_text}")
+            except Exception as e:
+                print(f"Error processing segment: {e}")
                 continue
 
-            words = text_val.strip().split()
-            chunk_size = 4
-            for i in range(0, len(words), chunk_size):
-                chunk_words = words[i:i + chunk_size]
-                chunk_duration = (end_val - start_val) / max(1, len(words) / chunk_size)
-                chunk_start = start_val + (i / len(words)) * (end_val - start_val)
-                chunk_end = min(chunk_start + chunk_duration, end_val)
-                
-                start_str = format_ass_timestamp(chunk_start)
-                end_str = format_ass_timestamp(chunk_end)
-                
-                line_text = " ".join([word.upper() for word in chunk_words])
-                ass_content.append(f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{line_text}")
-
+    print(f"Debug: json_to_ass_modern generated {len(ass_content) - header_length} subtitle lines")
     return "\n".join(ass_content)
 
 def json_to_srt(whisper_json):

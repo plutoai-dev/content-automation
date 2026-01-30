@@ -33,7 +33,8 @@ class AIService:
             if os.path.exists(temp_audio):
                 os.remove(temp_audio)
                 
-            return transcript
+            # Convert Transcription object to dict for robust serialization/processing
+            return transcript.model_dump() if hasattr(transcript, 'model_dump') else transcript
         except Exception as e:
             print(f"Transcription failed: {e}")
             if os.path.exists(temp_audio):

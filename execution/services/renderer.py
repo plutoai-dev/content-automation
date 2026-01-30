@@ -36,10 +36,10 @@ class RenderService:
             
             W, H = img.size
             
-            # Fixed font sizes based on orientation for consistent, prominent titles
-            # Portrait (9:16): 180pt | Landscape (16:9): 140pt
+            # Fixed font sizes based on orientation for massive, dominant titles
+            # Portrait (9:16): 250pt | Landscape (16:9): 180pt
             is_portrait = H > W
-            base_font_size = 180 if is_portrait else 140
+            base_font_size = 250 if is_portrait else 180
             
             # Use Impact font - the bold, chunky font used in viral videos
             try:

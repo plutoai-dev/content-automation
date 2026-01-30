@@ -90,15 +90,16 @@ export async function GET() {
         // Calculate Stats
         const total = dataRows.length;
         const success = dataRows.length > 0 ? 100 : 0; // Simple logic for now
-        const processing = 0; // Logic for this depends on how we track status in sheet
+        const processing = 0;
 
-        const lastRow = dataRows[0]; // Assuming descending order or we sort it
-        const lastActivity = lastRow ? lastRow.timestamp : 'None';
+        // Use the LAST row from the sheet as it's the most recent (standard append)
+        const lastRow = dataRows[dataRows.length - 1];
+        const lastActivity = lastRow ? (lastRow.timestamp || 'None') : 'None';
 
-        // Platform Distribution
+        // Distribution from all rows
         const platforms: any = {};
         dataRows.forEach(row => {
-            const pList = row.platform ? row.platform.split(',') : [];
+            const pList = row.platforms ? row.platforms.split(',') : [];
             pList.forEach((p: string) => {
                 const name = p.trim();
                 platforms[name] = (platforms[name] || 0) + 1;
@@ -110,9 +111,12 @@ export async function GET() {
             value: platforms[name],
         }));
 
+        // Return the 10 MOST RECENT rows (reverse chronological)
+        const activityFeed = dataRows.slice().reverse().slice(0, 10);
+
         return NextResponse.json({
             stats: { total, success, processing, lastActivity },
-            activity: dataRows.slice(0, 10), // Last 10
+            activity: activityFeed,
             platformDistribution,
             spreadsheetId,
             engineStatus,

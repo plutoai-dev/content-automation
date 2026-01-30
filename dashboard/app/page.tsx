@@ -12,6 +12,18 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const formatDate = (dateValue: string) => {
+        if (!dateValue || dateValue === 'Never' || dateValue === 'N/A' || dateValue === 'None') return 'Never';
+        try {
+            // Handle if it's already a readable string or a serial date
+            const date = new Date(dateValue);
+            if (isNaN(date.getTime())) return dateValue; // If it's not a valid date, return original string
+            return date.toLocaleString();
+        } catch {
+            return dateValue; // Fallback in case of parsing error
+        }
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -163,7 +175,7 @@ export default function Dashboard() {
                     />
                     <StatCard
                         title="Last Activity"
-                        value={stats.lastActivity === 'Never' || stats.lastActivity === 'None' ? 'Never' : stats.lastActivity}
+                        value={formatDate(stats.lastActivity)}
                         icon={<Activity />}
                         color="cyan"
                     />
@@ -208,7 +220,7 @@ export default function Dashboard() {
                                                             <h3 className="text-sm font-bold tracking-tight text-white/90 truncate pr-4 hover:text-violet-400 transition-colors">{row.title}</h3>
                                                         </a>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-white/40 text-[10px]">{row.timestamp}</span>
+                                                            <span className="text-white/40 text-[10px]">{formatDate(row.timestamp)}</span>
                                                             <span className="text-white/10 text-[10px]">•</span>
                                                             <a
                                                                 href={row.originalLink}
