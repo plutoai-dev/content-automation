@@ -199,11 +199,26 @@ export default function Dashboard() {
                                                         <Video className="w-5 h-5 text-violet-300" />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <h3 className="text-sm font-bold tracking-tight text-white/90 truncate pr-4">{row.title}</h3>
+                                                        <a
+                                                            href={row.originalLink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="hover:text-violet-400 transition-colors"
+                                                        >
+                                                            <h3 className="text-sm font-bold tracking-tight text-white/90 truncate pr-4 hover:text-violet-400 transition-colors">{row.title}</h3>
+                                                        </a>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <span className="text-white/40 text-[10px]">{row.timestamp}</span>
                                                             <span className="text-white/10 text-[10px]">•</span>
-                                                            <ExternalLink className="w-3 h-3 text-white/20 hover:text-white/60 cursor-pointer" />
+                                                            <a
+                                                                href={row.originalLink}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 text-white/30 hover:text-violet-400 transition-colors"
+                                                            >
+                                                                <ExternalLink className="w-3 h-3" />
+                                                                <span className="text-[9px] font-medium">SOURCE</span>
+                                                            </a>
                                                         </div>
                                                     </div>
                                                 </div>
