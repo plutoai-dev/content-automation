@@ -25,8 +25,8 @@ class AIService:
                 transcript = self.openai_client.audio.transcriptions.create(
                     model="whisper-1", 
                     file=audio_file,
-                    response_format="verbose_json"
-                    # Note: timestamp_granularities=["word"] not widely available yet
+                    response_format="verbose_json",
+                    timestamp_granularities=["word"]
                 )
             
             # Cleanup
