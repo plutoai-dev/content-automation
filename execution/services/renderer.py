@@ -87,7 +87,7 @@ class RenderService:
             # Darken the image with a semi-transparent overlay for better text visibility
             overlay = Image.new('RGBA', img.size, (0, 0, 0, 0))
             overlay_draw = ImageDraw.Draw(overlay)
-            overlay_draw.rectangle([0, 0, W, H], fill=(0, 0, 0, 160))  # Much darker overlay (63% opacity)
+            overlay_draw.rectangle([0, 0, W, H], fill=(0, 0, 0, 210))  # VERY dark overlay (82% opacity)
             img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGBA')
             draw = ImageDraw.Draw(img)
             
@@ -102,21 +102,6 @@ class RenderService:
                 word_widths = [draw.textbbox((0, 0), word, font=font)[2] - draw.textbbox((0, 0), word, font=font)[0] for word in words]
                 total_line_width = sum(word_widths) + (len(words) - 1) * 30  # Add spacing between words
                 
-                # Draw background box for this line
-                padding_x = 40
-                padding_y = 20
-                box_x1 = (W - total_line_width) / 2 - padding_x
-                box_y1 = y_offset - padding_y
-                box_x2 = (W + total_line_width) / 2 + padding_x
-                box_y2 = y_offset + line_height - padding_y
-                
-                # Draw rounded rectangle background (semi-transparent black)
-                draw.rounded_rectangle(
-                    [box_x1, box_y1, box_x2, box_y2],
-                    radius=20,
-                    fill=(0, 0, 0, 180)  # 70% opacity black background
-                )
-                
                 # Start position for this line
                 current_x = (W - total_line_width) / 2
                 
@@ -130,7 +115,7 @@ class RenderService:
                     # Choose color - clean text without outline
                     text_color = (255, 255, 0, 255) if is_important else (255, 255, 255, 255)  # Yellow or White (RGBA)
                     
-                    # Draw text directly (no outline)
+                    # Draw text directly on darkened background
                     draw.text((current_x, y_offset), word, font=font, fill=text_color)
                     
                     # Move to next word position
