@@ -60,11 +60,17 @@ class SheetsService:
         """Find the row with original_id and update it with final details."""
         if not self.service: return
         
-        # 1. Find the row index
+        # 1. Find the row index (LAST occurrence to avoid overwriting old processed videos)
         ids = self.get_processed_ids(sheet_id)
         try:
+            # Find LAST occurrence by reversing the list
+            # This ensures we update the most recently added row, not an old one
+            reversed_ids = list(reversed(ids))
+            reverse_index = reversed_ids.index(original_id)
+            # Convert back to original position: len - 1 - reverse_index
+            list_index = len(ids) - 1 - reverse_index
             # ids list corresponds to rows 2, 3, 4... (0-indexed in list -> 2-indexed in sheet)
-            row_index = ids.index(original_id) + 2 
+            row_index = list_index + 2 
         except ValueError:
             print(f"⚠️ Could not find row for {original_id} to update")
             return
