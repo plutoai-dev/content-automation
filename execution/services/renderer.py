@@ -36,14 +36,13 @@ class RenderService:
             
             W, H = img.size
             
-            # Calculate adaptive font size based on image dimensions
-            # For portrait videos (9:16), use larger font
+            # Fixed font sizes based on orientation for consistent, prominent titles
+            # Portrait (9:16): 180pt | Landscape (16:9): 140pt
             is_portrait = H > W
-            base_font_size = 200 if is_portrait else 160
+            base_font_size = 180 if is_portrait else 140
             
-            # Use Impact font (same as subtitles) but MUCH BIGGER for title
+            # Use Impact font - the bold, chunky font used in viral videos
             try:
-                # Try Impact font - the bold, chunky font used in viral videos
                 font = ImageFont.truetype("impact.ttf", base_font_size)
             except:
                 try:
