@@ -29,8 +29,8 @@ class SheetsService:
         """Append a new log entry marked as 'Processing' to lock the file."""
         if not self.service: return
         
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        range_name = "'Content Engine'!A:H"
+        # Use A2:A as the anchor to ensure we fill from the next empty row below the header
+        range_name = "'Content Engine'!A2:A"
         
         # Columns: Timestamp, Original Link, Final Link, Platforms, Status, Original ID, Strategy, Duration
         values = [[
@@ -54,7 +54,7 @@ class SheetsService:
                 valueInputOption='USER_ENTERED',
                 body=body
             ).execute()
-            print(f"🔒 Locked video {filename} in Sheet (appended to bottom)")
+            print(f"🔒 Locked video {filename} in Sheet (appended to next empty row)")
         except Exception as e:
             print(f"Error logging start to sheets: {e}")
 

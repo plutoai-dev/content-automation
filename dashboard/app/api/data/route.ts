@@ -57,9 +57,9 @@ export async function GET() {
             });
         }
 
-        // Process rows (skip header)
+        // Process rows (skip header and filter out empty footer rows)
         const header = rows[0];
-        const rawDataRows = rows.slice(1);
+        const rawDataRows = rows.slice(1).filter(row => row && row[0]); // Must have a timestamp
         const dataRows = rawDataRows.map((row, index) => {
             const obj: any = {};
             header.forEach((key, i) => {

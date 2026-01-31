@@ -12,15 +12,21 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const formatDate = (dateValue: string) => {
+    const formatDate = (dateValue: any) => {
         if (!dateValue || dateValue === 'Never' || dateValue === 'N/A' || dateValue === 'None') return 'Never';
         try {
-            // Handle if it's already a readable string or a serial date
+            // Handle Excel/Google Sheets serial dates (e.g. 46051.58)
+            const num = Number(dateValue);
+            if (!isNaN(num) && num > 40000 && num < 60000) {
+                const date = new Date((num - 25569) * 86400 * 1000);
+                return date.toLocaleString();
+            }
+
             const date = new Date(dateValue);
-            if (isNaN(date.getTime())) return dateValue; // If it's not a valid date, return original string
+            if (isNaN(date.getTime())) return dateValue;
             return date.toLocaleString();
         } catch {
-            return dateValue; // Fallback in case of parsing error
+            return dateValue;
         }
     };
 
