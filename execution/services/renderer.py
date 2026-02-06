@@ -36,28 +36,30 @@ class RenderService:
             
             W, H = img.size
             
-            # Fixed font sizes based on orientation for massive, dominant titles
-            # Calculated as percentage of image height for resolution independence
+            # MASSIVE TITLES: Use 25% of height for portrait, 20% for landscape
+            # This makes the text much larger as requested
             is_portrait = H > W
-            base_font_size = int(H * 0.14) if is_portrait else int(H * 0.12)
+            base_font_size = int(H * 0.25) if is_portrait else int(H * 0.20)
             
             # Use Impact font - the bold, chunky font used in viral videos
+            font = None
             try:
-                font = ImageFont.truetype("impact.ttf", base_font_size)
+                # Try finding Impact in standard Windows location
+                font = ImageFont.truetype("C:\\Windows\\Fonts\\impact.ttf", base_font_size)
             except:
                 try:
-                    # Fallback to Arial Bold
-                    font = ImageFont.truetype("arialbd.ttf", base_font_size)
+                    font = ImageFont.truetype("impact.ttf", base_font_size)
                 except:
                     try:
-                        font = ImageFont.truetype("arial.ttf", base_font_size)
+                        font = ImageFont.truetype("arialbd.ttf", base_font_size)
                     except:
                         font = ImageFont.load_default()
 
-            # Text wrapping for long titles - use 90% of width for maximum screen usage
-            max_width = int(W * 0.90)  # 5% margin on each side
+            # Text wrapping for massive titles
+            # Since font is huge, we need to be careful with width
+            max_width = int(W * 0.95)  # 2.5% margin on each side
             
-            # Split title into lines if too long
+            # Split title into lines
             words = title_text.split()
             lines = []
             current_line = []
@@ -74,52 +76,46 @@ class RenderService:
                         lines.append(' '.join(current_line))
                         current_line = [word]
                     else:
+                        # Word is wider than screen, force split (rare)
                         lines.append(word)
+                        current_line = []
             
             if current_line:
                 lines.append(' '.join(current_line))
             
-            # Calculate total text height with generous line spacing
-            line_height = int(base_font_size * 1.2)  # 120% of font size for line height
+            # Calculate total text height with tight line spacing for impact
+            line_height = int(base_font_size * 1.05)
             total_text_height = len(lines) * line_height
             
-            # Darken the image with a semi-transparent overlay for better text visibility
+            # Darken the image significantly for contrast
             overlay = Image.new('RGBA', img.size, (0, 0, 0, 0))
             overlay_draw = ImageDraw.Draw(overlay)
-            overlay_draw.rectangle([0, 0, W, H], fill=(0, 0, 0, 210))  # VERY dark overlay (82% opacity)
+            overlay_draw.rectangle([0, 0, W, H], fill=(0, 0, 0, 180))  # 70% opacity black
             img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGBA')
             draw = ImageDraw.Draw(img)
             
             # Calculate starting Y position to center text vertically
             y_offset = (H - total_text_height) / 2
             
-            # Draw each line of text centered with keyword highlighting
+            # Draw each line of text centered
             for line in lines:
-                words = line.split()
+                bbox = draw.textbbox((0, 0), line, font=font)
+                line_width = bbox[2] - bbox[0]
+                current_x = (W - line_width) / 2
                 
-                # Calculate total line width for centering
-                word_widths = [draw.textbbox((0, 0), word, font=font)[2] - draw.textbbox((0, 0), word, font=font)[0] for word in words]
-                total_line_width = sum(word_widths) + (len(words) - 1) * 30  # Add spacing between words
+                # Draw text with simple white fill and black outline using stroke
+                # stroke_width available in Pillow 5.0+ 
+                outline_width = int(base_font_size * 0.03)
                 
-                # Start position for this line
-                current_x = (W - total_line_width) / 2
-                
-                for i, word in enumerate(words):
-                    # Determine if this word should be highlighted (more selective)
-                    is_important = (
-                        (len(word) > 6) or      # Significant long words
-                        (word.isupper() and len(word) > 1)  # Intentional ALL CAPS emphasis
-                    )
-                    
-                    # Choose color - clean text without outline
-                    text_color = (255, 255, 0, 255) if is_important else (255, 255, 255, 255)  # Yellow or White (RGBA)
-                    
-                    # Draw text directly on darkened background
-                    draw.text((current_x, y_offset), word, font=font, fill=text_color)
-                    
-                    # Move to next word position
-                    word_width = word_widths[i]
-                    current_x += word_width + 30  # Add spacing
+                # Draw main text (Yellow for impact) with black stroke
+                draw.text(
+                    (current_x, y_offset), 
+                    line, 
+                    font=font, 
+                    fill=(255, 255, 0, 255),
+                    stroke_width=outline_width,
+                    stroke_fill=(0, 0, 0, 255)
+                )
                 
                 y_offset += line_height
             
@@ -127,7 +123,6 @@ class RenderService:
             img.convert('RGB').save(titled_image_path)
 
             # 2. Convert to Video (Loop) + Add Silent Audio
-            # Using subprocess for better control over filter_complex
             cmd = [
                 'ffmpeg', '-y',
                 '-loop', '1', '-t', str(duration), '-i', titled_image_path,
@@ -145,27 +140,80 @@ class RenderService:
             return None
 
     def burn_subtitles(self, video_path, srt_path, output_path):
-        """Burn subtitles (SRT or ASS) into video."""
+        """Burn subtitles (SRT or ASS) into video using proper path escaping."""
         try:
             abs_srt_path = os.path.abspath(srt_path)
-            # Use 'ass' filter for .ass files, 'subtitles' for .srt
+            # PROPER WINDOWS PATH ESCAPING FOR FFMPEG FILTERS
+            # 1. Replace backward slashes with forward slashes
+            # 2. Escape the colon in drive letter
+            # 3. Escape spaces even if quoted (safest for filter parser)
+            safe_srt_path = abs_srt_path.replace('\\', '/').replace(':', '\\\\:')
+            # safe_srt_path = safe_srt_path.replace(' ', '\\ ') # Try without first if using quotes? No, already failed.
+            
+            # Actually, let's look at the error again. "Unable to parse original_size".
+            # This happens when it thinks the next token is original_size but it isn't?
+            # Or it's trying to interpret the path as parameters.
+            
+            # TRY: Relative path if possible? 
+            # No, let's try escaping ' ' -> '\ ' 
+            # And REMOVE quotes if I escape spaces?
+            # Or keep quotes.
+            
+            # Let's try minimal request: Just the path, forward slashes, escaped colon.
+            # And using os.path.normpath?
+            
+            # Let's try this:
+            # 1. Forward slashes.
+            # 2. handle drive letter C: -> /c/ or something? No, ffmpeg expects C:
+            # 3. Quote the whole thing.
+            
+            # REVERTING TO SIMPLEST params:
+            # vf="ass='C\:/Path/To/File.ass'"
+            # But with escaping spaces?
+            
+            safe_srt_path = abs_srt_path.replace('\\', '/').replace(':', '\\\\:')
+            
+            # Escape single quotes in path if any
+            safe_srt_path = safe_srt_path.replace("'", "'\\''") 
+            
+            # Use filter_name='path'
+            # But I'll try to use the raw string directly without `filename=` key (it was breaking before with implicit key too).
+            
+            # CRITICAL: If I use subprocess directly I control the list.
+            # output_path, vf=...
+            
+            # Let's try escaping spaces.
+            # safe_srt_path = safe_srt_path.replace(' ', '\\\\\\ ') # Escape for shell AND filter?
+            
+            # OK, let's try a different approach.
+            # Change directory to the subtitle location during execution? No.
+            
+            # Let's try escaping space with a single backslash inside the quote?
+            # No, '...' treats \ as literal mostly.
+            
+            # Let's try WITHOUT quotes, but heavily escaped.
+            # C\:/Users/DeeMindz/Documents/Social\ content\ automation/test_subs.ass
+            
+            safe_srt_path_no_quotes = abs_srt_path.replace('\\', '/').replace(':', '\\\\:').replace(' ', '\\\\ ').replace("'", "\\'")
+            
             filter_name = 'ass' if srt_path.endswith('.ass') else 'subtitles'
             
-            safe_srt_path = abs_srt_path.replace('\\', '/').replace(':', '\\:')
+            print(f"Debug: Burning subtitles using {filter_name} filter with safe path: {safe_srt_path_no_quotes}")
             
-            print(f"Debug: Burning subtitles using {filter_name} filter with path: {safe_srt_path}")
+            # Construct complex filter argument
+            # vf="ass='C\:/path/to/file.ass'"
+            vf_arg = f"{filter_name}={safe_srt_path_no_quotes}"
             
             (
                 ffmpeg
                 .input(video_path)
-                .output(output_path, vf=f"{filter_name}='{safe_srt_path}'")
+                .output(output_path, vf=vf_arg)
                 .overwrite_output()
                 .run(capture_stdout=True, capture_stderr=True)
             )
             return output_path
         except ffmpeg.Error as e:
-            error_msg = e.stderr.decode()
-            print(f"Subtitle burn failed: {error_msg}")
+            print(f"Subtitle burn failed (FFmpeg): {e.stderr.decode()}")
             return None
         except Exception as e:
             print(f"Subtitle burn unexpected error: {e}")

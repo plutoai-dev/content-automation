@@ -1,4 +1,5 @@
 import time
+import datetime
 import os
 import json
 import logging
@@ -123,7 +124,9 @@ def main():
                 sheets.update_status(sheet_id, f"🔄 Processing: {file['name']}")
 
                 # 0. LOCK: Log processing start
-                sheets.log_processing_start(sheet_id, file['id'], file.get('webViewLink', 'N/A'), file['name'])
+                # Create a human-readable timestamp
+                current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                sheets.log_processing_start(sheet_id, file['id'], file.get('webViewLink', 'N/A'), file['name'], timestamp_str=current_timestamp)
 
                 # 1. Download
                 original_filename = file['name']

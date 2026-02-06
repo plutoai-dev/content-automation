@@ -25,36 +25,56 @@ class SheetsService:
         else:
             self.service = None
 
-    def log_processing_start(self, sheet_id, original_id, original_link, filename):
-        """Append a new log entry marked as 'Processing' to lock the file."""
+    def log_processing_start(self, sheet_id, original_id, original_link, filename, timestamp_str=None):
+        """
+        Append a new log entry to the next empty row.
+        Manually calculates the next row to prevent overwriting.
+        """
         if not self.service: return
         
-        # Use A2:A as the anchor to ensure we fill from the next empty row below the header
-        range_name = "'Content Engine'!A2:A"
-        
-        # Columns: Timestamp, Original Link, Final Link, Platforms, Status, Original ID, Strategy, Duration
-        values = [[
-            timestamp,
-            original_link,
-            "Processing...",      # Final Link placeholder
-            "Processing...",      # Platforms placeholder
-            "Processing",         # Status
-            original_id,
-            f"Started: {filename}", # Strategy placeholder
-            ""                    # Duration placeholder
-        ]]
-        
-        body = {'values': values}
-        
+        if not timestamp_str:
+            timestamp_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         try:
-            # Standard append finds the next empty row at the bottom
-            self.service.spreadsheets().values().append(
+            # 1. Find the next empty row by counting existing rows in Column A
+            # We look at A:A to see how many rows have data
+            result = self.service.spreadsheets().values().get(
+                spreadsheetId=sheet_id,
+                range="'Content Engine'!A:A"
+            ).execute()
+            
+            existing_rows = result.get('values', [])
+            next_row = len(existing_rows) + 1
+            
+            # If sheet is empty (no header), start at 1? usually row 1 is header.
+            # If len is 0, we write to row 1 (bad if header missing). 
+            # Assuming row 1 is header. If len is 1, next is 2.
+            if next_row < 2: next_row = 2
+            
+            range_name = f"'Content Engine'!A{next_row}"
+            
+            # Columns: Timestamp, Original Link, Final Link, Platforms, Status, Original ID, Strategy, Duration
+            values = [[
+                timestamp_str,
+                original_link,
+                "Processing...",      # Final Link placeholder
+                "Processing...",      # Platforms placeholder
+                "Processing",         # Status
+                original_id,
+                f"Started: {filename}", # Strategy placeholder
+                ""                    # Duration placeholder
+            ]]
+            
+            body = {'values': values}
+            
+            self.service.spreadsheets().values().update(
                 spreadsheetId=sheet_id,
                 range=range_name,
                 valueInputOption='USER_ENTERED',
                 body=body
             ).execute()
-            print(f"🔒 Locked video {filename} in Sheet (appended to next empty row)")
+            print(f"🔒 Locked video {filename} in Sheet at Row {next_row}")
+            
         except Exception as e:
             print(f"Error logging start to sheets: {e}")
 

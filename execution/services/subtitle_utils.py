@@ -32,15 +32,21 @@ def json_to_ass_modern(whisper_json):
     ass_content = [
         "[Script Info]",
         "ScriptType: v4.00+",
+        "PlayResX: 1920",  # Targeting vertical video ref width
+        "PlayResY: 1080",  # But wait, usually PlayResY should be height? 
+                           # Actually for 9:16 video: 1080x1920. 
+                           # To be safe for mixed content, let's stick to standard 1080p ref and let scales handle it? 
+                           # No, user wants PERFECT. 
+                           # Let's set PlayResY=1920 (likely 1080x1920 content).
+        "PlayResY: 1920", 
         "PlayResX: 1080",
-        "PlayResY: 1920",
         "",
         "[V4+ Styles]",
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
         # White text with thin black outline (Outline=2)
-        "Style: Default,Impact,90,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,0,2,50,50,200,1",
+        "Style: Default,Impact,90,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,2,50,50,200,1",
         # Yellow highlight with thin black outline (Outline=2)
-        "Style: Highlight,Impact,90,&H0000FFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,105,105,0,0,1,2,0,2,50,50,200,1",
+        "Style: Highlight,Impact,90,&H0000FFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,105,105,0,0,1,3,0,2,50,50,200,1",
         "",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
@@ -62,6 +68,9 @@ def json_to_ass_modern(whisper_json):
                 
                 if start_val is None or end_val is None: continue
 
+                # DO NOT FORCE START TO 0.00 artificially. 
+                # Start time must be respected for sync.
+                
                 start_str = format_ass_timestamp(start_val)
                 end_str = format_ass_timestamp(end_val)
                 
@@ -87,9 +96,19 @@ def json_to_ass_modern(whisper_json):
                 chunk_size = 4
                 for i in range(0, len(words), chunk_size):
                     chunk_words = words[i:i + chunk_size]
-                    chunk_duration = (end_val - start_val) / max(1, len(words) / chunk_size)
-                    chunk_start = start_val + (i / len(words)) * (end_val - start_val)
-                    chunk_end = min(chunk_start + chunk_duration, end_val)
+                    
+                    # Interpolate accurate timing within the segment 
+                    # This helps sync when word-level timestamps aren't available
+                    duration = end_val - start_val
+                    word_duration = duration / len(words)
+                    
+                    chunk_start_idx = i
+                    chunk_end_idx = min(len(words), i + chunk_size)
+                    
+                    chunk_num_words = chunk_end_idx - chunk_start_idx
+                    
+                    chunk_start = start_val + (chunk_start_idx * word_duration)
+                    chunk_end = start_val + (chunk_end_idx * word_duration)
                     
                     start_str = format_ass_timestamp(chunk_start)
                     end_str = format_ass_timestamp(chunk_end)
