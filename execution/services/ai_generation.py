@@ -52,6 +52,9 @@ class AIService:
 
         Task: Generate social media content.
         Output JSON with keys: 'title', 'caption', 'hashtags', 'linkedin_post' (if landscape/long), 'tiktok_caption' (if portrait).
+        
+        IMPORTANT: For the 'title', wrap 1-2 most important "impact" keywords in asterisks (*) for highlighting. 
+        Example: "Watch This *INSANE* Trick" or "How to *FIX* Your *SLEEP*"
         """
         
         try:

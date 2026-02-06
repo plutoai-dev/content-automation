@@ -36,10 +36,10 @@ class RenderService:
             
             W, H = img.size
             
-            # MASSIVE TITLES: Use 25% of height for portrait, 20% for landscape
-            # This makes the text much larger as requested
+            # MASSIVE TITLES: Use 8% of height for portrait, 6% for landscape
+            # Reduced to fit within center third of screen (TikTok style)
             is_portrait = H > W
-            base_font_size = int(H * 0.25) if is_portrait else int(H * 0.20)
+            base_font_size = int(H * 0.08) if is_portrait else int(H * 0.06)
             
             # Use Impact font - the bold, chunky font used in viral videos
             font = None
@@ -67,34 +67,50 @@ class RenderService:
 
             # Text wrapping for massive titles
             # Since font is huge, we need to be careful with width
-            max_width = int(W * 0.95)  # 2.5% margin on each side
+            max_width = int(W * 0.90)  # 5% margin on each side
             
-            # Split title into lines
-            words = title_text.split()
-            lines = []
+            # 1. Parse keywords (words wrapped in *)
+            # We need to preserve the "is_highlighted" state for each word
+            words_raw = title_text.split()
+            words_struct = [] # List of {'text': word, 'highlight': bool}
+            
+            for w in words_raw:
+                # Check for *word* or *word
+                # Simple logic: if * is present, treat as highlight and strip it
+                if '*' in w:
+                    clean_w = w.replace('*', '')
+                    words_struct.append({'text': clean_w, 'highlight': True})
+                else:
+                    words_struct.append({'text': w, 'highlight': False})
+
+            # 2. Wrap text into lines
+            lines = [] # List of lists of word_structs
             current_line = []
-            
-            for word in words:
-                test_line = ' '.join(current_line + [word])
-                bbox = draw.textbbox((0, 0), test_line, font=font)
+                                    
+            for w_struct in words_struct:
+                # Test with space
+                test_line_words = [ws['text'] for ws in current_line] + [w_struct['text']]
+                test_line_str = ' '.join(test_line_words)
+                
+                bbox = draw.textbbox((0, 0), test_line_str, font=font)
                 line_width = bbox[2] - bbox[0]
                 
                 if line_width <= max_width:
-                    current_line.append(word)
+                    current_line.append(w_struct)
                 else:
                     if current_line:
-                        lines.append(' '.join(current_line))
-                        current_line = [word]
+                        lines.append(current_line)
+                        current_line = [w_struct]
                     else:
                         # Word is wider than screen, force split (rare)
-                        lines.append(word)
+                        lines.append([w_struct])
                         current_line = []
             
             if current_line:
-                lines.append(' '.join(current_line))
+                lines.append(current_line)
             
             # Calculate total text height with tight line spacing for impact
-            line_height = int(base_font_size * 1.05)
+            line_height = int(base_font_size * 1.1)
             total_text_height = len(lines) * line_height
             
             # Darken the image significantly for contrast
@@ -107,25 +123,44 @@ class RenderService:
             # Calculate starting Y position to center text vertically
             y_offset = (H - total_text_height) / 2
             
+            space_bbox = draw.textbbox((0, 0), " ", font=font)
+            space_width = space_bbox[2] - space_bbox[0]
+
             # Draw each line of text centered
-            for line in lines:
-                bbox = draw.textbbox((0, 0), line, font=font)
-                line_width = bbox[2] - bbox[0]
-                current_x = (W - line_width) / 2
+            for line_words in lines:
+                # Calculate total width of this line to center it
+                full_line_text = ' '.join([ws['text'] for ws in line_words])
+                bbox = draw.textbbox((0, 0), full_line_text, font=font)
+                line_pixel_width = bbox[2] - bbox[0]
                 
-                # Draw text with simple white fill and black outline using stroke
-                # stroke_width available in Pillow 5.0+ 
-                outline_width = int(base_font_size * 0.03)
+                current_x = (W - line_pixel_width) / 2
                 
-                # Draw main text (Yellow for impact) with black stroke
-                draw.text(
-                    (current_x, y_offset), 
-                    line, 
-                    font=font, 
-                    fill=(255, 255, 0, 255),
-                    stroke_width=outline_width,
-                    stroke_fill=(0, 0, 0, 255)
-                )
+                # Draw words one by one
+                for i, w_struct in enumerate(line_words):
+                    word_text = w_struct['text']
+                    
+                    # Colors
+                    text_color = (255, 255, 0, 255) if w_struct['highlight'] else (255, 255, 255, 255) # Yellow or White
+                    stroke_color = (0, 0, 0, 255)
+                    outline_width = int(base_font_size * 0.03)
+
+                    draw.text(
+                        (current_x, y_offset), 
+                        word_text, 
+                        font=font, 
+                        fill=text_color,
+                        stroke_width=outline_width,
+                        stroke_fill=stroke_color
+                    )
+                    
+                    # Advance X
+                    w_bbox = draw.textbbox((0, 0), word_text, font=font)
+                    w_width = w_bbox[2] - w_bbox[0]
+                    current_x += w_width
+                    
+                    # Add space if not last word
+                    if i < len(line_words) - 1:
+                        current_x += space_width
                 
                 y_offset += line_height
             

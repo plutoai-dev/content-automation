@@ -74,8 +74,8 @@ def debug_intro():
     print("🎨 Generatng Intro Video...")
     intro_output = "debug_intro_result.mp4"
     
-    # Use a long-ish title to test wrapping and size
-    test_title = "THIS IS A TEST OF THE MASSIVE INTRO TITLE SYSTEM"
+    # Use a long-ish title to test wrapping and size and highlighting
+    test_title = "THIS IS A *TEST* OF THE *MASSIVE* INTRO TITLE SYSTEM"
     
     renderer.create_intro_video(frame_path, test_title, intro_output)
     
