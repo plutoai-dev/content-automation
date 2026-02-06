@@ -152,7 +152,8 @@ def main():
                 print(f"🎙️  Transcribing audio...")
                 sheets.update_status(sheet_id, f"🎙️ Transcribing: {file['name']}")
                 transcript = ai.transcribe_audio(temp_input_path)
-                transcript_text = transcript.text if transcript else ""
+                # FIX: transcript is a dict (model_dump), not an object
+                transcript_text = transcript.get('text', "") if transcript else ""
 
                 # Generate subtitles
                 ass_content = json_to_ass(transcript) if transcript else None
