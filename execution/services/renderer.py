@@ -51,9 +51,19 @@ class RenderService:
                     font = ImageFont.truetype("impact.ttf", base_font_size)
                 except:
                     try:
-                        font = ImageFont.truetype("arialbd.ttf", base_font_size)
+                        # Try Linux standard fonts (Debian/Ubuntu/CloudRun)
+                        # fonts-liberation package provides this
+                        font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", base_font_size)
                     except:
-                        font = ImageFont.load_default()
+                        try:
+                            # Fallback to DejaVu if available
+                            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", base_font_size)
+                        except:
+                            try:
+                                font = ImageFont.truetype("arialbd.ttf", base_font_size)
+                            except:
+                                print(f"⚠️ Warning: Could not load any requested font. Using default (tiny).")
+                                font = ImageFont.load_default()
 
             # Text wrapping for massive titles
             # Since font is huge, we need to be careful with width
