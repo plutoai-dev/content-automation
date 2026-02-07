@@ -63,66 +63,77 @@ class RenderService:
             if current_line:
                 lines.append(' '.join(current_line))
                 
-            # Rendering Lines - GROUPED BACKGROUND STYLE
+            # Rendering Lines - VARIABLE WIDTH STYLE (Hugging Text)
             if not lines:
                 return None
 
-            # 1. Calculate dimensions
             line_height = int(base_font_size * 1.2)
-            # Add small spacing between lines, but they are in one group
-            line_spacing = 10 
+            # Tighter vertical spacing so boxes look connected/grouped
+            line_spacing = 5 
+            
+            # Calculate total height of the text block + padding
             total_text_height = (len(lines) * line_height) + ((len(lines) - 1) * line_spacing)
             
-            max_line_width = 0
-            for line in lines:
-                bbox = draw.textbbox((0, 0), line, font=font)
-                w = bbox[2] - bbox[0]
-                if w > max_line_width:
-                    max_line_width = w
+            # Vertical centering
+            start_y = (height - total_text_height) / 2
             
-            # 2. Define Box Dimensions
-            padding_x = 40
-            padding_y = 30
-            
-            box_width = max_line_width + (padding_x * 2)
-            box_height = total_text_height + (padding_y * 2)
-            
-            # 3. Center Box on Screen
-            center_x = width / 2
-            center_y = height / 2
-            
-            box_x1 = center_x - (box_width / 2)
-            box_y1 = center_y - (box_height / 2)
-            box_x2 = box_x1 + box_width
-            box_y2 = box_y1 + box_height
-            
+            padding_x = 30
+            padding_y = 15
             corner_radius = 20
             
-            # 4. Draw Single Grouped Background
-            try:
-                draw.rounded_rectangle(
-                    [box_x1, box_y1, box_x2, box_y2],
-                    radius=corner_radius,
-                    fill=(255, 255, 255, 255)
-                )
-            except AttributeError:
-                draw.rectangle(
-                    [box_x1, box_y1, box_x2, box_y2],
-                    fill=(255, 255, 255, 255)
-                )
+            # First Pass: Draw Background Boxes
+            current_y = start_y
             
-            # 5. Draw Text Lines
-            # Text starts at box_y1 + padding_y
-            current_y = box_y1 + padding_y
+            for line in lines:
+                bbox = draw.textbbox((0, 0), line, font=font)
+                text_w = bbox[2] - bbox[0]
+                text_h = bbox[3] - bbox[1] # Actual text height
+                
+                # Center horizontally
+                center_x = width / 2
+                text_x = center_x - (text_w / 2)
+                
+                # Box coords
+                # Because we want lines to hug, maybe we standardize height based on line_height?
+                # Let's align box vertically with the line slot
+                
+                box_x1 = text_x - padding_x
+                box_y1 = current_y - padding_y
+                box_x2 = text_x + text_w + padding_x
+                box_y2 = current_y + line_height + padding_y # Use predictable line height for box
+                # Maybe slightly reduce bottom padding or overlap?
+                # Let's keep it simple: separate boxes that are close.
+                
+                try:
+                    draw.rounded_rectangle(
+                        [box_x1, box_y1, box_x2, box_y2],
+                        radius=corner_radius,
+                        fill=(255, 255, 255, 255)
+                    )
+                except AttributeError:
+                    draw.rectangle(
+                        [box_x1, box_y1, box_x2, box_y2],
+                        fill=(255, 255, 255, 255)
+                    )
+                
+                current_y += line_height + line_spacing
+
+            # Second Pass: Draw Text (Black, Centered)
+            current_y = start_y
             
             for line in lines:
                 bbox = draw.textbbox((0, 0), line, font=font)
                 text_w = bbox[2] - bbox[0]
                 
-                # Center text horizontally within the box (and thus screen)
+                # Center text horizontally
                 text_x = center_x - (text_w / 2)
                 
-                draw.text((text_x, current_y), line, font=font, fill=(0, 0, 0, 255))
+                # Vertical alignment within the line slot
+                # Pillow draws text from top-left baseline-ish. 
+                # Let's use simple top alignment relative to our calculated slot.
+                # Fine-tuning: add a small offset to visually center in the box height?
+                text_y_offset = (line_height - (bbox[3]-bbox[1])) / 2
+                draw.text((text_x, current_y + text_y_offset), line, font=font, fill=(0, 0, 0, 255))
                 
                 current_y += line_height + line_spacing
                 
