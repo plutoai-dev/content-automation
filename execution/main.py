@@ -188,24 +188,29 @@ def main():
                     import shutil
                     shutil.copy(temp_input_path, subtitled_video_path)
 
-                # 6. Handle Portrait Short Intro
+                # 6. Handle Portrait Short Intro (OVERLAY STYLE)
                 if metadata.get('length_category') == 'short' and metadata.get('orientation') == 'portrait':
-                    print(f"📱 Generating intro for short portrait video...")
+                    print(f"📱 Generating intro overlay for short portrait video...")
                     sheets.update_status(sheet_id, f"📱 Generating intro: {file['name']}")
 
-                    # Extract first frame
-                    frame_path = f"temp_frame_{base_name}.png"
-                    renderer.extract_first_frame(temp_input_path, frame_path)
-
-                    # Create intro video
-                    intro_video_path = f"temp_intro_{base_name}.mp4"
+                    # Create overlay image
+                    titled_image_path = f"temp_overlay_{base_name}.png"
                     title_text = strategy.get('title', 'Watch This!')
-                    renderer.create_intro_video(frame_path, title_text, intro_video_path)
+                    
+                    # Get dimensions from metadata
+                    w = metadata.get('width', 1080)
+                    h = metadata.get('height', 1920)
+                    
+                    renderer.create_intro_overlay(title_text, w, h, titled_image_path)
 
-                    # Merge intro + video
+                    # Apply overlay to subtitled video
                     final_video_path = f"Final_{base_name}.mp4"
-                    print(f"🔗 Merging intro and video...")
-                    renderer.merge_videos(intro_video_path, subtitled_video_path, final_video_path)
+                    print(f"🔗 Applying intro overlay...")
+                    
+                    # If subtitles failed, use original temp input
+                    source_for_overlay = subtitled_video_path if os.path.exists(subtitled_video_path) else temp_input_path
+                    
+                    renderer.apply_intro_overlay(source_for_overlay, titled_image_path, final_video_path)
                 else:
                     # Just use subtitled video as final
                     final_video_path = f"Final_{base_name}.mp4"
