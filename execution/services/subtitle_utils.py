@@ -125,7 +125,8 @@ def json_to_ass_modern(whisper_json):
 
 def json_to_ass_karaoke(whisper_json):
     """
-    Generate ASS subtitles with Karaoke effect (moving highlight) using \k tags.
+    Generate ASS subtitles with 'Box Highlight' effect.
+    Creates a separate event for each word's duration to style the active word distinctively.
     """
     if not whisper_json: return ""
 
@@ -136,25 +137,18 @@ def json_to_ass_karaoke(whisper_json):
     # 1. Extract all words flatly
     all_words = []
     
-    # Try getting 'words' directly (verbose_json)
     words_data = get_val(whisper_json, 'words')
     if words_data:
         all_words = words_data
     else:
-        # Fallback: extract from segments if they have 'words'
         segments = get_val(whisper_json, 'segments') or []
         for seg in segments:
             seg_words = get_val(seg, 'words')
             if seg_words:
                 all_words.extend(seg_words)
-            else:
-                # Worst case: split text and interpolate (less accurate)
-                # For now let's skip interpolation fallback in karaoke mode to keep it simple,
-                # or better: rely on json_to_ass_modern if no word timestamps found?
-                pass
     
     if not all_words:
-        print("Warning: No word-level timestamps found for Karaoke. Falling back to standard.")
+        # Fallback to standard if no word timestamps
         return json_to_ass_modern(whisper_json)
 
     # 2. ASS Header
@@ -166,65 +160,75 @@ def json_to_ass_karaoke(whisper_json):
         "",
         "[V4+ Styles]",
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-        # Karaoke Style: 
-        # Primary (Filled/Sung) = Yellow (&H0000FFFF)
-        # Secondary (Unfilled) = White (&H00FFFFFF)
-        # Outline = Black (&H00000000)
-        "Style: Karaoke,Impact,100,&H0000FFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,2,10,10,200,1",
+        # Base Style: White Text, Black Outline
+        "Style: Default,Impact,85,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,0,2,20,20,200,1",
         "",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
     ]
 
     # 3. Group into lines
-    chunk_size = 4 # words per line
+    chunk_size = 3 # Fewer words per line for better focus with the box effect
+    
+    # Highlight Colors (Cycling or fixed? Let's use a nice Purple/Blue cycle or fixed Gold)
+    # User asked for "colored rectangle". Let's use a vibrant color.
+    # &H00FFD700 (Gold) -> ASS BGR: &H0000D7FF
+    active_color_bgr = "&H0000D7FF" # Gold
     
     for i in range(0, len(all_words), chunk_size):
         chunk = all_words[i:i + chunk_size]
         if not chunk: continue
         
         try:
-            # Calculate line start/end
-            start_obj = chunk[0]
-            end_obj = chunk[-1]
+            # We need to create an event for EACH word in this chunk
+            # The text will be the SAME for all events in this chunk (the full line)
+            # But the styling tags will move.
             
-            line_start_s = get_val(start_obj, 'start')
-            line_end_s = get_val(end_obj, 'end')
+            full_line_text_words = [get_val(w, 'word').strip().upper() for w in chunk]
             
-            if line_start_s is None or line_end_s is None: continue
+            # Start/End of the entire line (for safety, though we use word times)
+            # Actually, to make it smooth, the line should stay on screen from start of first word to end of last.
+            # But we are replacing the line with a new "version" of the line every word.
             
-            start_timestamp = format_ass_timestamp(line_start_s)
-            end_timestamp = format_ass_timestamp(line_end_s)
-            
-            # Build Karaoke String
-            # {\k10}Word {\k20}Word
-            k_text = ""
-            current_time = line_start_s
-            
-            for w in chunk:
-                w_start = get_val(w, 'start')
-                w_end = get_val(w, 'end')
-                w_word = get_val(w, 'word').strip().upper()
+            for j, active_word_obj in enumerate(chunk):
+                w_start = get_val(active_word_obj, 'start')
+                w_end = get_val(active_word_obj, 'end')
                 
-                # Check for gap before word
-                gap = w_start - current_time
-                if gap > 0.05: # 50ms tolerance
-                    gap_cs = int(gap * 100)
-                    k_text += fr"{{\k{gap_cs}}}" 
-                    current_time += gap
+                # Fill gaps? If there's a silence between words, the previous word should usually hold or blank?
+                # For smooth visual, let's extend to next word start?
+                # Or just strict timing. Strict is safer for sync.
                 
-                # Word duration
-                dur = w_end - current_time
-                dur_cs = int(dur * 100)
-                if dur_cs < 1: dur_cs = 1 # Minimum 1cs
+                if w_start is None or w_end is None: continue
                 
-                k_text += fr"{{\k{dur_cs}}}{w_word} "
-                current_time = w_end
-            
-            ass_content.append(f"Dialogue: 0,{start_timestamp},{end_timestamp},Karaoke,,0,0,0,,{k_text}")
-            
+                start_str = format_ass_timestamp(w_start)
+                end_str = format_ass_timestamp(w_end)
+                
+                # Build the line text with overrides
+                display_text = ""
+                for k, w_obj in enumerate(chunk):
+                    w_text = full_line_text_words[k]
+                    
+                    if k == j:
+                        # ACTIVE WORD
+                        # Simulate Box:
+                        # 1c (Primary) = Black (&H00000000)
+                        # 3c (Border) = Gold (active_color_bgr)
+                        # bord = Thick (e.g., 6) to look like a box
+                        # 
+                        # Result: Black text inside a thick Gold shape?
+                        # Or White text inside Gold shape?
+                        # White text: 1c&H00FFFFFF&
+                        
+                        display_text += fr"{{\3c{active_color_bgr}\bord6\1c&H00000000&}} {w_text} {{\r}}" 
+                        # \r resets to default style for next word (important!)
+                    else:
+                        # INACTIVE WORD
+                        display_text += f" {w_text} "
+
+                ass_content.append(f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{display_text.strip()}")
+                
         except Exception as e:
-            print(f"Error processing karaoke chunk: {e}")
+            print(f"Error processing visual chunk: {e}")
             continue
 
     return "\n".join(ass_content)
