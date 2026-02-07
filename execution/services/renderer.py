@@ -20,7 +20,8 @@ class RenderService:
             
             # Font setup (reuse logic from before but simpler)
             is_portrait = height > width
-            base_font_size = int(height * 0.08) if is_portrait else int(height * 0.06)
+            # REDUCED SIZE: 5% for portrait, 4% for landscape (was 8%/6%)
+            base_font_size = int(height * 0.05) if is_portrait else int(height * 0.04)
             
             font = None
             try:
@@ -44,7 +45,7 @@ class RenderService:
             current_line = []
             
             for word in words:
-                # Strip asterisks if present (we might want to support highlighting later, but for now black on white is the request)
+                # Strip asterisks if present
                 clean_word = word.replace('*', '') 
                 test_line = ' '.join(current_line + [clean_word])
                 bbox = draw.textbbox((0, 0), test_line, font=font)
@@ -65,45 +66,46 @@ class RenderService:
             # Rendering Lines
             # We want each line to have its own white background block
             line_height = int(base_font_size * 1.2)
-            total_block_height = len(lines) * (line_height + 10) # Add padding between lines
+            total_block_height = len(lines) * (line_height + 20) # More padding between lines
             
             start_y = (height - total_block_height) / 2
             
-            padding_x = 20
-            padding_y = 10
+            padding_x = 30
+            padding_y = 15
+            corner_radius = 20 # Rounded edge radius
             
             for i, line in enumerate(lines):
                 bbox = draw.textbbox((0, 0), line, font=font)
                 text_w = bbox[2] - bbox[0]
-                text_h = bbox[3] - bbox[1] # Use ascent/descent? simpler bbox is usually okay for impact
+                text_h = bbox[3] - bbox[1] 
                 
                 # Center horizontally
                 center_x = width / 2
                 text_x = center_x - (text_w / 2)
                 
                 # Calculate Y
-                line_y = start_y + (i * (line_height + 10))
+                line_y = start_y + (i * (line_height + 20))
                 
                 # Draw White Background Box (Rounded Rectangle)
                 # Box coords
                 box_x1 = text_x - padding_x
                 box_y1 = line_y - padding_y
                 box_x2 = text_x + text_w + padding_x
-                box_y2 = line_y + text_h + padding_y # textbbox height is elusive, let's use font size roughly?
-                # actually textbbox y is relative to 0,0. 
-                # Let's just center the box around the text center vertical
-                
-                # Better Y centering:
-                # line_y is the top of the "line slot".
-                # Let's draw text at line_y.
+                box_y2 = line_y + text_h + padding_y + (base_font_size * 0.1) 
                 
                 # Draw rounded rectangle
-                # pillow 8.2+ has rounded_rectangle. If not, rectangle.
-                # Assuming rectangle for safety/compatibility or simple style
-                draw.rectangle(
-                    [box_x1, box_y1, box_x2, box_y2 + (base_font_size * 0.2)], # Extra bottom padding for impact font descent
-                    fill=(255, 255, 255, 255)
-                )
+                try:
+                    draw.rounded_rectangle(
+                        [box_x1, box_y1, box_x2, box_y2],
+                        radius=corner_radius,
+                        fill=(255, 255, 255, 255)
+                    )
+                except AttributeError:
+                    # Fallback for older Pillow versions
+                    draw.rectangle(
+                        [box_x1, box_y1, box_x2, box_y2],
+                        fill=(255, 255, 255, 255)
+                    )
                 
                 # Draw Text (Black)
                 draw.text((text_x, line_y), line, font=font, fill=(0, 0, 0, 255))
@@ -150,4 +152,50 @@ class RenderService:
             return output_path
         except ffmpeg.Error as e:
             print(f"Overlay application failed: {e.stderr.decode()}")
+            return None
+
+    def burn_subtitles(self, video_path, srt_path, output_path):
+        """Burn subtitles (SRT or ASS) into video using proper path escaping."""
+        try:
+            abs_srt_path = os.path.abspath(srt_path)
+            # PROPER WINDOWS PATH ESCAPING FOR FFMPEG FILTERS
+            # 1. Replace backward slashes with forward slashes
+            # 2. Escape the colon in drive letter
+            # 3. Escape spaces even if quoted (safest for filter parser)
+            
+            # REVERTING TO SIMPLEST params:
+            # vf="ass='C\:/Path/To/File.ass'"
+            # But with escaping spaces?
+            
+            safe_srt_path = abs_srt_path.replace('\\', '/').replace(':', '\\\\:')
+            
+            # Escape single quotes in path if any
+            safe_srt_path = safe_srt_path.replace("'", "'\\''") 
+            
+            # Use filter_name='path'
+            # C\:/Users/DeeMindz/Documents/Social\ content\ automation/test_subs.ass
+            
+            safe_srt_path_no_quotes = abs_srt_path.replace('\\', '/').replace(':', '\\\\:').replace(' ', '\\\\ ').replace("'", "\\'")
+            
+            filter_name = 'ass' if srt_path.endswith('.ass') else 'subtitles'
+            
+            print(f"Debug: Burning subtitles using {filter_name} filter with safe path: {safe_srt_path_no_quotes}")
+            
+            # Construct complex filter argument
+            # vf="ass='C\:/path/to/file.ass'"
+            vf_arg = f"{filter_name}={safe_srt_path_no_quotes}"
+            
+            (
+                ffmpeg
+                .input(video_path)
+                .output(output_path, vf=vf_arg)
+                .overwrite_output()
+                .run(capture_stdout=True, capture_stderr=True)
+            )
+            return output_path
+        except ffmpeg.Error as e:
+            print(f"Subtitle burn failed (FFmpeg): {e.stderr.decode()}")
+            return None
+        except Exception as e:
+            print(f"Subtitle burn unexpected error: {e}")
             return None

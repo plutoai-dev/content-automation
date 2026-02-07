@@ -123,6 +123,112 @@ def json_to_ass_modern(whisper_json):
     print(f"Debug: json_to_ass_modern generated {len(ass_content) - header_length} subtitle lines")
     return "\n".join(ass_content)
 
+def json_to_ass_karaoke(whisper_json):
+    """
+    Generate ASS subtitles with Karaoke effect (moving highlight) using \k tags.
+    """
+    if not whisper_json: return ""
+
+    def get_val(obj, key):
+        if isinstance(obj, dict): return obj.get(key)
+        return getattr(obj, key, None)
+
+    # 1. Extract all words flatly
+    all_words = []
+    
+    # Try getting 'words' directly (verbose_json)
+    words_data = get_val(whisper_json, 'words')
+    if words_data:
+        all_words = words_data
+    else:
+        # Fallback: extract from segments if they have 'words'
+        segments = get_val(whisper_json, 'segments') or []
+        for seg in segments:
+            seg_words = get_val(seg, 'words')
+            if seg_words:
+                all_words.extend(seg_words)
+            else:
+                # Worst case: split text and interpolate (less accurate)
+                # For now let's skip interpolation fallback in karaoke mode to keep it simple,
+                # or better: rely on json_to_ass_modern if no word timestamps found?
+                pass
+    
+    if not all_words:
+        print("Warning: No word-level timestamps found for Karaoke. Falling back to standard.")
+        return json_to_ass_modern(whisper_json)
+
+    # 2. ASS Header
+    ass_content = [
+        "[Script Info]",
+        "ScriptType: v4.00+",
+        "PlayResX: 1080", 
+        "PlayResY: 1920",
+        "",
+        "[V4+ Styles]",
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+        # Karaoke Style: 
+        # Primary (Filled/Sung) = Yellow (&H0000FFFF)
+        # Secondary (Unfilled) = White (&H00FFFFFF)
+        # Outline = Black (&H00000000)
+        "Style: Karaoke,Impact,100,&H0000FFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,2,10,10,200,1",
+        "",
+        "[Events]",
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    ]
+
+    # 3. Group into lines
+    chunk_size = 4 # words per line
+    
+    for i in range(0, len(all_words), chunk_size):
+        chunk = all_words[i:i + chunk_size]
+        if not chunk: continue
+        
+        try:
+            # Calculate line start/end
+            start_obj = chunk[0]
+            end_obj = chunk[-1]
+            
+            line_start_s = get_val(start_obj, 'start')
+            line_end_s = get_val(end_obj, 'end')
+            
+            if line_start_s is None or line_end_s is None: continue
+            
+            start_timestamp = format_ass_timestamp(line_start_s)
+            end_timestamp = format_ass_timestamp(line_end_s)
+            
+            # Build Karaoke String
+            # {\k10}Word {\k20}Word
+            k_text = ""
+            current_time = line_start_s
+            
+            for w in chunk:
+                w_start = get_val(w, 'start')
+                w_end = get_val(w, 'end')
+                w_word = get_val(w, 'word').strip().upper()
+                
+                # Check for gap before word
+                gap = w_start - current_time
+                if gap > 0.05: # 50ms tolerance
+                    gap_cs = int(gap * 100)
+                    k_text += fr"{{\k{gap_cs}}}" 
+                    current_time += gap
+                
+                # Word duration
+                dur = w_end - current_time
+                dur_cs = int(dur * 100)
+                if dur_cs < 1: dur_cs = 1 # Minimum 1cs
+                
+                k_text += fr"{{\k{dur_cs}}}{w_word} "
+                current_time = w_end
+            
+            ass_content.append(f"Dialogue: 0,{start_timestamp},{end_timestamp},Karaoke,,0,0,0,,{k_text}")
+            
+        except Exception as e:
+            print(f"Error processing karaoke chunk: {e}")
+            continue
+
+    return "\n".join(ass_content)
+
 def json_to_srt(whisper_json):
     """
     Convert Whisper verbose_json output to SRT format string (Legacy/Fallback).

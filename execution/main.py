@@ -8,7 +8,7 @@ from services.drive import DriveService
 from services.video_analysis import VideoAnalyzer
 from services.ai_generation import AIService
 from services.renderer import RenderService
-from services.subtitle_utils import json_to_srt, json_to_ass
+from services.subtitle_utils import json_to_srt, json_to_ass, json_to_ass_karaoke
 from services.sheets import SheetsService
 
 
@@ -156,7 +156,8 @@ def main():
                 transcript_text = transcript.get('text', "") if transcript else ""
 
                 # Generate subtitles
-                ass_content = json_to_ass(transcript) if transcript else None
+                # Use Karaoke style by default for ASS
+                ass_content = json_to_ass_karaoke(transcript) if transcript else None
                 ass_path = f"temp_{base_name}.ass"
                 srt_content = json_to_srt(transcript) if transcript else None
                 srt_path = f"temp_{base_name}.srt"
