@@ -211,15 +211,11 @@ def json_to_ass_karaoke(whisper_json):
                     if k == j:
                         # ACTIVE WORD
                         # Simulate Box:
-                        # 1c (Primary) = Black (&H00000000)
-                        # 3c (Border) = Gold (active_color_bgr)
-                        # bord = Thick (e.g., 6) to look like a box
-                        # 
-                        # Result: Black text inside a thick Gold shape?
-                        # Or White text inside Gold shape?
-                        # White text: 1c&H00FFFFFF&
+                        # 3c (Border) = Wine (active_color_bgr)
+                        # bord = Thick (e.g., 6)
+                        # 1c (Primary) = White (&H00FFFFFF) - User request: "let the subtitle all be same white color"
                         
-                        display_text += fr"{{\3c{active_color_bgr}\bord6\1c&H00000000&}} {w_text} {{\r}}" 
+                        display_text += fr"{{\3c{active_color_bgr}\bord6\1c&H00FFFFFF&}} {w_text} {{\r}}" 
                         # \r resets to default style for next word (important!)
                     else:
                         # INACTIVE WORD

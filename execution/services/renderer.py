@@ -63,52 +63,68 @@ class RenderService:
             if current_line:
                 lines.append(' '.join(current_line))
                 
-            # Rendering Lines
-            # We want each line to have its own white background block
+            # Rendering Lines - GROUPED BACKGROUND STYLE
+            if not lines:
+                return None
+
+            # 1. Calculate dimensions
             line_height = int(base_font_size * 1.2)
-            total_block_height = len(lines) * (line_height + 20) # More padding between lines
+            # Add small spacing between lines, but they are in one group
+            line_spacing = 10 
+            total_text_height = (len(lines) * line_height) + ((len(lines) - 1) * line_spacing)
             
-            start_y = (height - total_block_height) / 2
+            max_line_width = 0
+            for line in lines:
+                bbox = draw.textbbox((0, 0), line, font=font)
+                w = bbox[2] - bbox[0]
+                if w > max_line_width:
+                    max_line_width = w
             
-            padding_x = 30
-            padding_y = 15
-            corner_radius = 20 # Rounded edge radius
+            # 2. Define Box Dimensions
+            padding_x = 40
+            padding_y = 30
             
-            for i, line in enumerate(lines):
+            box_width = max_line_width + (padding_x * 2)
+            box_height = total_text_height + (padding_y * 2)
+            
+            # 3. Center Box on Screen
+            center_x = width / 2
+            center_y = height / 2
+            
+            box_x1 = center_x - (box_width / 2)
+            box_y1 = center_y - (box_height / 2)
+            box_x2 = box_x1 + box_width
+            box_y2 = box_y1 + box_height
+            
+            corner_radius = 20
+            
+            # 4. Draw Single Grouped Background
+            try:
+                draw.rounded_rectangle(
+                    [box_x1, box_y1, box_x2, box_y2],
+                    radius=corner_radius,
+                    fill=(255, 255, 255, 255)
+                )
+            except AttributeError:
+                draw.rectangle(
+                    [box_x1, box_y1, box_x2, box_y2],
+                    fill=(255, 255, 255, 255)
+                )
+            
+            # 5. Draw Text Lines
+            # Text starts at box_y1 + padding_y
+            current_y = box_y1 + padding_y
+            
+            for line in lines:
                 bbox = draw.textbbox((0, 0), line, font=font)
                 text_w = bbox[2] - bbox[0]
-                text_h = bbox[3] - bbox[1] 
                 
-                # Center horizontally
-                center_x = width / 2
+                # Center text horizontally within the box (and thus screen)
                 text_x = center_x - (text_w / 2)
                 
-                # Calculate Y
-                line_y = start_y + (i * (line_height + 20))
+                draw.text((text_x, current_y), line, font=font, fill=(0, 0, 0, 255))
                 
-                # Draw White Background Box (Rounded Rectangle)
-                # Box coords
-                box_x1 = text_x - padding_x
-                box_y1 = line_y - padding_y
-                box_x2 = text_x + text_w + padding_x
-                box_y2 = line_y + text_h + padding_y + (base_font_size * 0.1) 
-                
-                # Draw rounded rectangle
-                try:
-                    draw.rounded_rectangle(
-                        [box_x1, box_y1, box_x2, box_y2],
-                        radius=corner_radius,
-                        fill=(255, 255, 255, 255)
-                    )
-                except AttributeError:
-                    # Fallback for older Pillow versions
-                    draw.rectangle(
-                        [box_x1, box_y1, box_x2, box_y2],
-                        fill=(255, 255, 255, 255)
-                    )
-                
-                # Draw Text (Black)
-                draw.text((text_x, line_y), line, font=font, fill=(0, 0, 0, 255))
+                current_y += line_height + line_spacing
                 
             img.save(output_image_path)
             return output_image_path
