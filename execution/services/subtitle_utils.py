@@ -172,8 +172,8 @@ def json_to_ass_karaoke(whisper_json):
     
     # Highlight Colors (Cycling or fixed? Let's use a nice Purple/Blue cycle or fixed Gold)
     # User asked for "colored rectangle". Let's use a vibrant color.
-    # &H00FFD700 (Gold) -> ASS BGR: &H0000D7FF
-    active_color_bgr = "&H0000D7FF" # Gold
+    # Ref: #E23F5B (Wine/Pink) -> ASS BGR: &H005B3FE2
+    active_color_bgr = "&H005B3FE2" # Wine/Pink
     
     for i in range(0, len(all_words), chunk_size):
         chunk = all_words[i:i + chunk_size]
