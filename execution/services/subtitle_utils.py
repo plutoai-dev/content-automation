@@ -161,7 +161,18 @@ def json_to_ass_karaoke(whisper_json):
         "[V4+ Styles]",
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
         # Base Style: White Text, Black Outline
-        "Style: Default,Impact,85,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,0,2,20,20,200,1",
+        # Modifications for User Request:
+        # 1. Fontname: Montserrat-Bold (Need to ensure player can find it, or attach it? ASS usually requires installed fonts or attachment. We will burn it, so FFmpeg needs path)
+        #    Actually for burning, we can specify proper fontdir or just hope it picks up system font if installed? 
+        #    Since we have file, we can map it? 
+        #    Wait, for `ass` filter, we can't easily force a custom file unless we set FontConfig or similar.
+        #    Easiest: Assume Montserrat is installed OR we will just use 'Montserrat' family and hope FFmpeg sees it if we put it in ~/.fonts or register it?
+        #    For now, let's set Fontname=Montserrat. If not found, it falls back.
+        # 2. Fontsize: Reduced slightly (85 -> 75) for compaction.
+        # 3. Spacing: -1 or -0.5 for "compact" look? Let's try 0 (normal) first or -1.
+        # 4. MarginL/R: Increase to 100 to prevent overflow (Safety margin).
+        
+        "Style: Default,Montserrat Bold,75,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,-1,0,1,2,0,2,100,100,200,1",
         "",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"

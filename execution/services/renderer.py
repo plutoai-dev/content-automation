@@ -18,25 +18,21 @@ class RenderService:
             img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
             
-            # Font setup (reuse logic from before but simpler)
+            # Font setup
             is_portrait = height > width
-            # REDUCED SIZE: 5% for portrait, 4% for landscape (was 8%/6%)
-            base_font_size = int(height * 0.05) if is_portrait else int(height * 0.04)
+            base_font_size = int(height * 0.05) if is_portrait else int(height * 0.06)
             
-            font = None
+            # Use Montserrat-Bold if available, else standard font
+            font_path = "assets/fonts/Montserrat-Bold.ttf"
+            if not os.path.exists(font_path):
+                # Fallback to system fonts or default
+                font_path = "arial.ttf" # Or "impact.ttf"
+                
             try:
-                font = ImageFont.truetype("C:\\Windows\\Fonts\\impact.ttf", base_font_size)
-            except:
-                try:
-                    font = ImageFont.truetype("impact.ttf", base_font_size)
-                except:
-                    try:
-                        font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", base_font_size)
-                    except:
-                        try:
-                            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", base_font_size)
-                        except:
-                            font = ImageFont.load_default()
+                font = ImageFont.truetype(font_path, base_font_size)
+            except IOError:
+                font = ImageFont.load_default()
+                print("Warning: Could not load requested font. Using default.")
 
             # Text Wrapping
             max_width = int(width * 0.85) # Keep some padding
@@ -210,7 +206,15 @@ class RenderService:
             
             # Construct complex filter argument
             # vf="ass='C\:/path/to/file.ass'"
-            vf_arg = f"{filter_name}={safe_srt_path_no_quotes}"
+            # ADDING fontsdir to ensure Montserrat is found
+            # Syntax: ass=filename:fontsdir=directory
+            
+            project_root = os.getcwd()
+            fonts_dir = os.path.join(project_root, 'assets', 'fonts').replace('\\', '/').replace(':', '\\\\:')
+            
+            vf_arg = f"{filter_name}={safe_srt_path_no_quotes}:fontsdir={fonts_dir}"
+            
+            print(f"Debug: Burning with filter: {vf_arg}")
             
             (
                 ffmpeg

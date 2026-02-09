@@ -48,7 +48,7 @@ def debug_preview():
     # 3. Generate Intro Overlay (White Box, Rounded, Small Font)
     print("1. Generating Intro Overlay...")
     overlay_path = "debug_final_intro.png"
-    intro_title = "WATCH THIS VIDEO TO SEE THE NEW *WINE* SUBTITLES AND *ROUNDED* INTRO!"
+    intro_title = "WATCH THIS VIDEO TO SEE NEW *MONTSERRAT* FONT AND COMPACT SUBTITLES!"
     
     # Assume portrait for test
     width = 1080
