@@ -20,19 +20,30 @@ class RenderService:
             
             # Font setup
             is_portrait = height > width
-            base_font_size = int(height * 0.05) if is_portrait else int(height * 0.06)
+            # RESTORED: Original font size (5% for portrait, 4% for landscape)
+            base_font_size = int(height * 0.05) if is_portrait else int(height * 0.04)
             
-            # Use Montserrat-Bold if available, else standard font
-            font_path = "assets/fonts/Montserrat-Bold.ttf"
-            if not os.path.exists(font_path):
-                # Fallback to system fonts or default
-                font_path = "arial.ttf" # Or "impact.ttf"
-                
-            try:
-                font = ImageFont.truetype(font_path, base_font_size)
-            except IOError:
+            # Try multiple font paths with robust fallbacks
+            font = None
+            font_paths = [
+                "assets/fonts/Montserrat-Bold.ttf",  # First choice: Montserrat
+                "C:\\Windows\\Fonts\\impact.ttf",     # Windows Impact
+                "impact.ttf",                         # Local Impact
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",  # Linux
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",          # Linux fallback
+            ]
+            
+            for font_path in font_paths:
+                try:
+                    if os.path.exists(font_path) or not font_path.startswith(("C:", "/")):
+                        font = ImageFont.truetype(font_path, base_font_size)
+                        break
+                except IOError:
+                    continue
+            
+            if font is None:
                 font = ImageFont.load_default()
-                print("Warning: Could not load requested font. Using default.")
+                print("Warning: Could not load any font. Using default.")
 
             # Text Wrapping
             max_width = int(width * 0.85) # Keep some padding
